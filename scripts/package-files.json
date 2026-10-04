@@ -58,6 +58,8 @@
     "skills/auto-prompt/templates/zh-development.txt",
     "skills/auto-prompt/templates/zh-general.txt",
     "skills/auto-prompt/templates/en-development.txt",
-    "skills/auto-prompt/templates/en-general.txt"
+    "skills/auto-prompt/templates/en-general.txt",
+    "tests/test_install_recovery.py",
+    "docs/release-v1.0.2.md"
   ]
 }

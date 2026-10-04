@@ -229,6 +229,45 @@ def restore_files(home, paths, transaction, before):
             shutil.copy2(transaction / "before" / key, path)
 
 
+def verify_backup(transaction, before):
+    backup_paths = {key: transaction / "before" / key if value is not None else None
+                    for key, value in before.items()}
+    if current_state(backup_paths) != before:
+        raise ValueError("transaction backup is missing or modified; rollback stopped")
+
+
+def interrupted_target_gap(transaction, journal, now):
+    # A missing directory alone is not evidence of our interrupted rename.
+    return (journal["status"] in ("applying", "recovery_conflict")
+            and now["target"] is None and journal["before"]["target"] is not None
+            and current_state({"target": transaction / "displaced"})["target"] == journal["before"]["target"]
+            and current_state({"target": transaction / "stage"})["target"] == journal["after"]["target"])
+
+
+def recover_attempt(home, paths, transaction, journal, attempted):
+    # Only restore resources this attempt tried to write. Preserve all foreign edits,
+    # including edits to resources we wrote that no longer match our planned bytes.
+    now = current_state(paths)
+    safe, conflicts = {}, []
+    for key in attempted:
+        if now[key] == journal["before"][key]:
+            continue
+        if now[key] == journal["after"][key] or (key == "target" and interrupted_target_gap(transaction, journal, now)):
+            safe[key] = paths[key]
+        else:
+            conflicts.append(key)
+    verify_backup(transaction, {key: journal["before"][key] for key in safe})
+    # Recheck each resource immediately before restoration. This is conflict
+    # detection, not an OS-wide lock against other plugin managers.
+    for key, path in safe.items():
+        if current_state({key: path})[key] != now[key]:
+            conflicts.append(key)
+            continue
+        restore_files(home, {key: path}, transaction, journal["before"])
+    if conflicts:
+        raise ValueError("recovery preserved later edits to: " + ", ".join(sorted(conflicts)))
+
+
 def install(mode, home, python_path=None):
     home = Path(home).absolute()
     plain_path(home)
@@ -237,12 +276,14 @@ def install(mode, home, python_path=None):
         for path in paths.values():
             if path is not None:
                 within(home, path)
+        before = current_state(paths)
         version = load_json(ROOT / "plugin.json")["version"]
         old = tree_bytes(paths["target"])
         new = merge_program(old, source_files(mode), mode, version)
         catalog = catalog_update(paths["catalog"], home, paths["target"]) if mode == "plugin" else None
         desired = {"target": new, "catalog": encoded(catalog) if catalog else None, "runtime": runtime_data(python_path or sys.executable)}
-        before = current_state(paths)
+        if current_state(paths) != before:
+            raise ValueError("installation changed during preparation; retry after closing other installers")
         after = {"target": hashes(new), "catalog": digest(desired["catalog"]) if catalog else None, "runtime": digest(desired["runtime"])}
         result = {"mode": mode, "version": version, "path": str(paths["target"]), "changed": before != after, "backup": None, "catalogBackup": None, "transaction": None}
         if catalog:
@@ -272,24 +313,33 @@ def install(mode, home, python_path=None):
         # Check before the try: another process's newly edited data must not be restored over.
         if current_state(paths) != before:
             raise ValueError("installation changed during preparation; retry after closing other installers")
-        mutated = False
+        attempted = set()
         try:
             paths["target"].parent.mkdir(parents=True, exist_ok=True)
             if paths["target"].exists():
                 paths["target"].rename(transaction / "displaced")
-                mutated = True
+                attempted.add("target")
             stage.rename(paths["target"])
-            mutated = True
+            attempted.add("target")
             for key in ("catalog", "runtime"):
                 if desired[key] is not None and before[key] != after[key]:
+                    if current_state({key: paths[key]})[key] != before[key]:
+                        raise ValueError("installation changed before writing " + key)
+                    attempted.add(key)
                     write_atomic(paths[key], desired[key])
             if current_state(paths) != after:
                 raise ValueError("post-install verification failed")
             journal["status"] = "committed"
             write_atomic(transaction / "transaction.json", encoded(journal))
-        except Exception:
-            if mutated:
-                restore_files(home, paths, transaction, before)
+        except Exception as failure:
+            try:
+                if attempted:
+                    recover_attempt(home, paths, transaction, journal, attempted)
+            except Exception as recovery_error:
+                journal["status"] = "recovery_conflict"
+                (transaction / "transaction.json").write_bytes(encoded(journal))
+                raise ValueError("installation failed: " + str(failure) + "; " + str(recovery_error)
+                                 + "; transaction " + transaction.name + "; see docs/install.md recovery") from failure
             journal["status"] = "rolled_back"
             (transaction / "transaction.json").write_bytes(encoded(journal))
             raise
@@ -307,18 +357,17 @@ def rollback(home, transaction_id):
         transaction = home / ".codex/auto-prompt/transactions" / transaction_id
         within(home, transaction)
         journal = load_json(transaction / "transaction.json")
-        if journal.get("schema") != 1 or journal.get("status") not in ("committed", "applying", "rolled_back"):
+        if journal.get("schema") != 1 or journal.get("status") not in ("committed", "applying", "rolled_back", "recovery_conflict"):
             raise ValueError("unsupported transaction journal")
         paths = locations(home, journal["mode"])
         now = current_state(paths)
         if now == journal["before"]:
             return {"rolledBack": True, "changed": False, "transaction": transaction_id}
-        if any(now[key] not in (journal["before"][key], journal["after"][key]) for key in paths):
+        if any(now[key] not in (journal["before"][key], journal["after"][key])
+               and not (key == "target" and interrupted_target_gap(transaction, journal, now)) for key in paths):
             raise ValueError("files/configuration changed since installation; rollback stopped to preserve later edits")
-        backup_paths = {key: transaction / "before" / key if value is not None else None for key, value in journal["before"].items()}
-        if current_state(backup_paths) != journal["before"]:
-            raise ValueError("transaction backup is missing or modified; rollback stopped")
-        restore_files(home, paths, transaction, journal["before"])
+        verify_backup(transaction, journal["before"])
+        recover_attempt(home, paths, transaction, journal, set(paths))
         journal["status"] = "rolled_back"
         write_atomic(transaction / "transaction.json", encoded(journal))
         return {"rolledBack": True, "changed": True, "transaction": transaction_id, "next": "Refresh/reinstall Auto Prompt Skill from its restored source in ChatGPT; client caches are host-managed."}

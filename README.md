@@ -1,19 +1,19 @@
-# Auto Prompt Skill · v1.0.1
+# Auto Prompt Skill · v1.0.2
 
-**目标 Agent＋口语化需求 → 可复制的提示词。** 本版本已通过用户的 ChatGPT 本地 Work 验收。
+**目标 Agent＋口语化需求 → 可复制的提示词。** v1.0.2 修复安装恢复问题，并改善严格模式冲突澄清与生成后修订。
 
 在 ChatGPT 中使用本技能，为 Codex、ChatGPT、视频生成模型等目标 Agent 整理开发、学习、研究、写作、视频等需求。**运行宿主**执行这个技能；**目标 Agent**接收它生成的提示词，两者可以不同。
 
-[English](README.en.md) · [安装/升级/回滚](docs/install.md) · [ChatGPT 验收清单](docs/chatgpt-acceptance.md) · [发布说明](docs/release-v1.0.1.md)
+[English](README.en.md) · [安装/升级/回滚](docs/install.md) · [ChatGPT 验收清单](docs/chatgpt-acceptance.md) · [发布说明](docs/release-v1.0.2.md)
 
 ## 新电脑的一个安装入口
 
 1. 安装并登录支持本地技能的 ChatGPT 桌面客户端，使用连接这台电脑的本地执行环境。宿主安装、登录、授权与最终启用由用户完成。
-2. 从 [v1.0.1 Release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.1) 下载并解压整合包 **auto-prompt-skill-1.0.1-bundle.zip**，双击 **Install-Windows.cmd**。
+2. 从 [v1.0.2 Release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2) 下载并解压整合包 **auto-prompt-skill-1.0.2-bundle.zip**，双击 **Install-Windows.cmd**。
 3. 安装器先检查项目专属 Python，再检查兼容的已有解释器。缺少或不兼容时，从 Python 官方下载固定版本 3.13.12 的 Windows x64 嵌入式运行时，验证固定 SHA-256，解压到本项目专属目录；不会更新全局 Python、PATH 或注册表。只有标准库，无 pip/npm/Ollama/Docker 依赖。
-4. 按安装器输出，在 ChatGPT 桌面客户端的 Plugins 里选择个人本地来源（通常为 Auto Prompt Local），安装或刷新 Auto Prompt Skill。重启/新建本地聊天后，确认实际加载 v1.0.1。
+4. 按安装器输出，在 ChatGPT 桌面客户端的 Plugins 里选择个人本地来源（通常为 Auto Prompt Local），安装或刷新 Auto Prompt Skill。重启/新建本地聊天后，确认实际加载 v1.0.2。
 
-安装器完成文件安装、项目运行时登记和个人 marketplace 条目更新；**文件安装成功不等于客户端已启用**。如果账号或客户端没有该入口，按实际宿主提供的方式启用，不能把 ZIP 附件视为安装成功。v1.0.1 自动运行时准备限定 Windows x64；其他平台保留 Python 手动安装路径，不宣称已完成所有宿主适配。
+安装器完成文件安装、项目运行时登记和个人 marketplace 条目更新；**文件安装成功不等于客户端已启用**。如果账号或客户端没有该入口，按实际宿主提供的方式启用，不能把 ZIP 附件视为安装成功。v1.0.2 自动运行时准备限定 Windows x64；其他平台保留 Python 手动安装路径，不宣称已完成所有宿主适配。
 
 首次缺少 Python 需联网下载约 10.4 MB。有兼容解释器或经校验的官方 ZIP 时可离线安装，详见 [依赖方案](docs/v1.0.1-design.md)。
 
@@ -40,9 +40,11 @@
 
 已有信息会被复用；只追问影响目标、范围、交付或验收的关键歧义。可以说“改成……”“暂不确定”“由你建议”“先出草案”。有结构化提问工具时使用提示框；没有时使用文字提问。具体入口受当前 ChatGPT 环境控制。
 
+首次灵活生成后会在复制正文外给出一句可选修改提示。直接说“追加……”“把……替换为……”“撤销刚才修改”即可修订完整结果；“换个任务”会清除上个任务的要求。说“直接使用”只结束转换，不执行业务任务。严格输出、后续修订及要求只给结果时不附修改提示。
+
 ## 模式变化与兼容
 
-| 输入 | v1.0.1 行为 |
+| 输入 | v1.0.2 行为 |
 | --- | --- |
 | 日常自然语言，未指定模式 | **灵活模式默认**：当前 ChatGPT 理解并改写 |
 | 明确要求严格模式 | 执行固定模板脚本，原样返回 |
@@ -50,7 +52,7 @@
 | JSON strictMode=false | 当前模型灵活改写 |
 | 直接运行 render_prompt.py | 继续严格模式、旧参数及原默认值 |
 
-灵活输出因模型和上下文可能变化。严格模式仅保证**固定版本与模板、相同 JSON 输入得到相同 UTF-8 输出**，不承担自动理解、翻译或任意领域优化。自然语言到 JSON 的抽取仍由模型完成。四套旧模板及原严格脚本未更改。
+灵活输出因模型和上下文可能变化。严格模式仅保证**固定版本与模板、相同 JSON 输入得到相同 UTF-8 输出**，不承担自动理解、翻译或任意领域优化。自然语言到 JSON 的抽取仍由模型完成。四套旧模板及原严格脚本未更改。ChatGPT 若发现明确要求与模板或旧语言规则冲突，会先询问切换灵活模式、修正 JSON 或接受限制；直接 CLI 不进行这项语义澄清。
 
 ~~~json
 {"targetAgent":"ChatGPT","rawPrompt":"根据我提供的会议记录整理决定和行动项。","requirements":"中文；不推测缺失的负责人和截止时间。","profile":"general","strictMode":true}
@@ -71,7 +73,7 @@ python skills/auto-prompt/scripts/render_prompt.py --input examples/chatgpt.json
 - 独立的用户文件原样保留。
 - SKILL.md、模板等程序文件被本地修改或与新文件冲突时，安装中止并列出路径，供用户明确合并；不自动拼接规则或覆盖定制。
 - 重复安装相同内容不会重复登记。
-- 中途写入失败自动恢复程序、marketplace 和运行时指针。
+- 中途失败仅恢复本次尝试写入且仍可验证的资源；发现外部修改时保留并报告冲突。
 - 安装器打印 transaction ID，可用 Install-Windows.ps1 -Rollback <ID> 回滚；若之后有用户编辑则停止，防止覆盖。
 - 客户端的插件缓存/启用由宿主管理，回滚来源后仍须刷新并新建聊天核验。
 
@@ -86,7 +88,7 @@ python scripts/build_release.py
 
 运行时集成测试入口：tests/windows_acceptance.ps1。测试与验收边界见 [验证说明](docs/validation.md)。自动测试不能证明 ChatGPT 的技能发现、提示框或真实多轮引导已成功，必须完成 [新对话验收](docs/chatgpt-acceptance.md)。
 
-整合包由公开文件白名单构建；运行时、用户配置、备份和机器日志不进入发布包。正式下载附件及 SHA-256 清单见 [Release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.1)。
+整合包由公开文件白名单构建；运行时、用户配置、备份和机器日志不进入发布包。正式下载附件及 SHA-256 清单见 [Release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2)。
 
 ## 来源与许可
 

@@ -1,6 +1,6 @@
-# Auto Prompt Skill · v1.0.1
+# Auto Prompt Skill · v1.0.2
 
-Accepted by the user in ChatGPT local Work. Download the bundle and SHA-256 checksums from the [v1.0.1 release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.1).
+v1.0.2 improves recovery, strict-mode conflict clarification and prompt revisions. Download the bundle and SHA-256 checksums from the [v1.0.2 release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2).
 
 Turn a target agent and a rough request into a usable prompt inside ChatGPT. The **host** runs the skill; the **target agent** receives its generated prompt. Targets may include Codex, ChatGPT or video models, across software, study, research, writing and video tasks.
 
@@ -16,10 +16,12 @@ Invoke the skill alone for brief guidance, or provide the target and request tog
 
 Natural-language requests now default to flexible model rewriting. Explicit strict mode runs the script and returns its result unchanged. Complete legacy JSON without strictMode still means true, and the direct CLI defaults are unchanged. Fixed renderer and templates plus identical JSON produce identical UTF-8 bytes. This does not make natural-language extraction deterministic.
 
+The first flexible result may include one optional revision hint outside the copyable prompt. Append, replace and undo requests preserve unaffected constraints. A new task clears old requirements. Strict mode and revision replies omit the hint. Conflicting strict templates or legacy language rules require a targeted choice before final output; the renderer and direct CLI remain unchanged.
+
 ## Upgrade and rollback
 
-Run the same installer. Unknown user files and unrelated catalog entries are retained; modified program files cause an explicit conflict instead of silent overwrite. Reinstallation is idempotent. Failed transactions restore program files, catalog and runtime registration. Use -Rollback <transaction-id> to restore a completed install, provided no later edits would be overwritten. Refresh the host-managed plugin afterward.
+Run the same installer. Unknown user files and unrelated catalog entries are retained; modified program files cause an explicit conflict instead of silent overwrite. Reinstallation is idempotent. Failed transactions restore only attempted resources whose contents can still be verified; concurrent foreign edits are preserved and reported. Use -Rollback <transaction-id> to restore a completed install, provided no later edits would be overwritten. Refresh the host-managed plugin afterward.
 
-See [installation, upgrade, recovery and uninstall](docs/install.md), [design and runtime comparison](docs/v1.0.1-design.md), [validation](docs/validation.md), [ChatGPT acceptance](docs/chatgpt-acceptance.md), and [release notes](docs/release-v1.0.1.md). These detailed guides are in Chinese.
+See [installation, upgrade, recovery and uninstall](docs/install.md), [design and runtime comparison](docs/v1.0.1-design.md), [validation](docs/validation.md), [ChatGPT acceptance](docs/chatgpt-acceptance.md), and [release notes](docs/release-v1.0.2.md). These detailed guides are in Chinese.
 
 The project remains ISC licensed, with MIT attribution for the adapted clarification mechanism from mattpocock/skills. Runtime licenses remain inside the official Python archive. No runtime binaries, credentials, user configuration or machine logs are included in release packages.

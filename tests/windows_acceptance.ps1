@@ -2,11 +2,13 @@
 param(
     [string]$RuntimeArchive,
     [string]$LegacyBundle,
+    [string]$PreviousBundle,
     [switch]$AllowDownload,
     [Parameter(Mandatory=$true)][string]$OutputDirectory
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$expectedVersion = (Get-Content (Join-Path $root 'plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
 $evidence = Join-Path ([IO.Path]::GetFullPath($OutputDirectory)) ('run-' + [guid]::NewGuid().ToString('N'))
 [void][IO.Directory]::CreateDirectory($evidence)
 $checks = New-Object Collections.Generic.List[object]
@@ -30,14 +32,16 @@ function Setup([string[]]$Arguments, [int]$ExpectedExit=0) {
     if ($code -eq 0) { return ($text | ConvertFrom-Json) }
     return $text
 }
-function Snapshot([string]$HomeDirectory) {
-    $target = Join-Path $HomeDirectory '.codex\plugins\local-auto-prompt-skill'
+function Snapshot([string]$HomeDirectory, [string]$Mode='plugin') {
+    $relative = if ($Mode -eq 'plugin') { '.codex\plugins\local-auto-prompt-skill' } else { '.agents\skills\auto-prompt' }
+    $target = Join-Path $HomeDirectory $relative
     $files = @{}
     foreach ($item in Get-ChildItem -LiteralPath $target -Recurse -File) {
         $files[$item.FullName.Substring($target.Length + 1)] = (Get-FileHash -LiteralPath $item.FullName).Hash
     }
     $catalog = Join-Path $HomeDirectory '.agents\plugins\marketplace.json'
-    return @{files=$files; catalog=(Get-FileHash -LiteralPath $catalog).Hash}
+    $catalogHash = if (Test-Path $catalog) { (Get-FileHash -LiteralPath $catalog).Hash } else { $null }
+    return @{files=$files; catalog=$catalogHash}
 }
 $passed = $false
 $failure = $null
@@ -102,7 +106,7 @@ try {
         [IO.File]::WriteAllText($catalogPath,($catalog | ConvertTo-Json -Depth 10),(New-Object Text.UTF8Encoding($false)))
         $before = Snapshot $legacy
         $upgrade = Setup @('-HomeDirectory',$legacy,'-PythonPath',$runtime.python,'-Offline')
-        Check ($upgrade.version -eq '1.0.1') 'upgrade installs v1.0.1'
+        Check ($upgrade.version -eq $expectedVersion) 'upgrade installs current package version'
         Check ((Get-Content (Join-Path $target 'user\keep.txt') -Raw) -eq 'custom preference') 'custom file preserved during real upgrade'
         $newCatalog = Get-Content $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
         Check (@($newCatalog.plugins | Where-Object name -eq 'unrelated').Count -eq 1) 'unrelated plugin preserved'
@@ -112,6 +116,32 @@ try {
         Check (($before.files.Count -eq $after.files.Count) -and (@($before.files.Keys | Where-Object { $before.files[$_] -ne $after.files[$_] }).Count -eq 0)) 'rollback restores exact v1.0.0 and user files'
         Check (-not (Test-Path (Join-Path $legacy '.codex\auto-prompt\runtime.json'))) 'rollback removes newly added runtime pointer'
     }
+    if ($PreviousBundle) {
+        Check ((Get-FileHash -LiteralPath $PreviousBundle).Hash.ToLowerInvariant() -eq '56dfd2f786f3bc0f674edfe1f22b6bd40d8a8cb4d6faa0c168b346574b2c05f9') 'v1.0.1 bundle integrity'
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $previousSource = Join-Path $evidence 'previous-source'
+        [IO.Compression.ZipFile]::ExtractToDirectory([IO.Path]::GetFullPath($PreviousBundle),$previousSource)
+        foreach ($mode in @('plugin','skill')) {
+            $previousUser = Join-Path $evidence ('previous-' + $mode)
+            & $runtime.python -I (Join-Path $previousSource 'auto-prompt-skill\scripts\install.py') --home $previousUser --mode $mode | Out-Null
+            Check ($LASTEXITCODE -eq 0) "real v1.0.1 $mode installation prepared"
+            $relative = if ($mode -eq 'plugin') { '.codex\plugins\local-auto-prompt-skill' } else { '.agents\skills\auto-prompt' }
+            $target = Join-Path $previousUser $relative
+            [IO.File]::WriteAllText((Join-Path $target 'preferences.txt'),'user-owned preference')
+            $before = Snapshot $previousUser $mode
+            $oldRuntimeHash = (Get-FileHash (Join-Path $previousUser '.codex\auto-prompt\runtime.json')).Hash
+            $upgrade = Setup @('-HomeDirectory',$previousUser,'-Mode',$mode,'-PythonPath',$runtime.python,'-Offline')
+            Check ($upgrade.version -eq $expectedVersion -and $upgrade.changed) "v1.0.1 $mode upgrade installs current version"
+            Check ((Get-Content (Join-Path $target 'preferences.txt') -Raw) -eq 'user-owned preference') "$mode upgrade preserves custom file"
+            $again = Setup @('-HomeDirectory',$previousUser,'-Mode',$mode,'-PythonPath',$runtime.python,'-Offline')
+            Check (-not $again.changed) "$mode upgraded installation is idempotent"
+            $rolled = Setup @('-HomeDirectory',$previousUser,'-Mode',$mode,'-PythonPath',$runtime.python,'-Offline','-Rollback',$upgrade.transaction)
+            $after = Snapshot $previousUser $mode
+            Check ($before.catalog -eq $after.catalog) "$mode rollback restores prior catalog"
+            Check (($before.files.Count -eq $after.files.Count) -and (@($before.files.Keys | Where-Object { $before.files[$_] -ne $after.files[$_] }).Count -eq 0)) "$mode rollback restores exact v1.0.1 and user files"
+            Check ((Get-FileHash (Join-Path $previousUser '.codex\auto-prompt\runtime.json')).Hash -eq $oldRuntimeHash) "$mode rollback preserves prior runtime registration"
+        }
+    }
     Check ((Get-FileHash -LiteralPath $runtime.python).Hash -eq $runtimeHash) 'reused interpreter not modified'
     $pathAfter = @([Environment]::GetEnvironmentVariable('PATH','User'),[Environment]::GetEnvironmentVariable('PATH','Machine'))
     Check (($pathBefore[0] -ceq $pathAfter[0]) -and ($pathBefore[1] -ceq $pathAfter[1])) 'global user and machine PATH unchanged'
@@ -119,7 +149,7 @@ try {
 } catch {
     $failure = $_.Exception.Message
 } finally {
-    $report = @{passed=$passed; failure=$failure; powershell=$PSVersionTable.PSVersion.ToString(); os=[Environment]::OSVersion.VersionString; checks=$checks.ToArray(); legacyChecked=[bool]$LegacyBundle; dedicatedDownloadRequested=[bool]$AllowDownload; scope='Isolated user directories on this Windows host; not a clean VM or ChatGPT UI acceptance.'}
+    $report = @{passed=$passed; failure=$failure; version=$expectedVersion; powershell=$PSVersionTable.PSVersion.ToString(); os=[Environment]::OSVersion.VersionString; checks=$checks.ToArray(); legacyChecked=[bool]$LegacyBundle; previousChecked=[bool]$PreviousBundle; dedicatedDownloadRequested=[bool]$AllowDownload; scope='Isolated user directories on this Windows host; not a clean VM or ChatGPT UI acceptance.'}
     $reportPath = Join-Path $evidence 'windows-acceptance.json'
     [IO.File]::WriteAllText($reportPath,($report | ConvertTo-Json -Depth 10),(New-Object Text.UTF8Encoding($false)))
     Write-Output $reportPath
