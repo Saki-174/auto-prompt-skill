@@ -1,61 +1,121 @@
-# 安装与使用
+# 安装、升级、恢复与卸载 · v1.0.1
 
-## ChatGPT Work 与 Codex 桌面版
+本轮目标宿主为连接本机执行环境的 ChatGPT 桌面客户端。自动依赖准备仅为 Windows x64；文件格式与旧 Codex 安装模式保留，不把兼容格式等同于完成其他宿主验收。
 
-安装整合包后，选择个人本地插件目录安装。整合包只有 Skill 和模板脚本，**没有 MCP 连接**，因此不需要填写服务 URL 或认证信息。
+## 责任边界
 
-Windows：双击 `Install-Windows.cmd`，或 PowerShell 运行：
+| 步骤 | 安装器 | 用户／宿主 |
+| --- | --- | --- |
+| 安装 ChatGPT、登录账号、选择本地环境 | 不代办 | 用户完成 |
+| 检查 Python 能力 | 自动隔离探测，检查 3.9–3.14 和所需标准库 | 可显式指定已有 Python |
+| 缺少／不兼容运行时 | 下载固定官方 Python 到专属目录，SHA-256 校验后使用 | 网络受限时提供官方 ZIP |
+| 文件、个人 marketplace、运行时路径登记 | 自动安装与事务备份 | 冲突时由用户明确解决 |
+| 插件安装／刷新、权限、启用、新聊天 | 打印下一步 | 在实际客户端入口完成 |
+| ChatGPT 对话表现 | 自动测试不能证明 | 按验收清单实测 |
 
-```powershell
-.\Install-Windows.ps1 -Mode plugin
-```
+## 新电脑安装
 
-macOS／Linux：
+1. 安装、登录 ChatGPT 桌面客户端，确认有本地执行与个人本地 Plugins 来源入口。没有该能力的环境不属于本次自动安装验收范围。
+2. 从 [v1.0.1 Release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.1) 下载整合包，核对其 SHA-256 与随包外提供的 SHA256SUMS.txt；解压。
+3. 双击 Install-Windows.cmd；无需提前装 Python。也可运行：
+~~~powershell
+.\Install-Windows.ps1
+~~~
+4. 安装器输出实际 path、marketplaceName、transaction（有变更时）和下一步操作。没有报成功时按错误处理，不跳过。
+5. 重启 ChatGPT 桌面客户端，在 Plugins 选择对应个人本地来源，安装或刷新 Auto Prompt Skill。已有 v1.0.0 时确认实际缓存/已加载技能版本变为 1.0.1；只有来源目录变化不算客户端完成升级。
+6. 新建连接本机的聊天，选择 Auto Prompt，执行 [验收清单](chatgpt-acceptance.md)。
 
-```sh
-python3 scripts/install.py --mode plugin
-```
+本地来源按官方 personal marketplace 格式登记。账号政策和客户端版本可能影响入口；不保证所有网页、移动端或云端都有该入口。把 ZIP 上传为聊天附件不会自动安装本地技能。
 
-安装位置：
+## 项目专属路径
 
-- 插件文件：`~/.codex/plugins/local-auto-prompt-skill/`
-- 目录登记：`~/.agents/plugins/marketplace.json`
+相对于所选用户目录：
+- 程序来源：.codex/plugins/local-auto-prompt-skill/
+- 目录登记：.agents/plugins/marketplace.json，仅本项目条目
+- 运行时指针：.codex/auto-prompt/runtime.json
+- 可选下载运行时：.codex/auto-prompt/runtimes/python-3.13.12-x64/
+- 官方 ZIP 缓存：.codex/auto-prompt/downloads/
+- 事务备份：.codex/auto-prompt/transactions/<ID>/
 
-这里的 `~` 是本机当前用户目录。安装器保持原有目录名称和其他插件，打印实际 `marketplaceName`。它只登记可安装项；重启客户端后在 Plugins 中安装，才能启用。首次安装时目录名为 `Auto Prompt Local`。
+安装器不编辑整个客户端 config.toml，也不自动复制其他插件。运行时不加 PATH，不安装 pip，不通过 py/pymanager 引发共享 Python 安装。已存在的专属固定版本优先；否则使用兼容宿主/已有 Python；找不到才下载。嵌入式包保留原 LICENSE.txt 和依赖文件。
 
-安装器需要 Python 3.9+。Windows 包装脚本能使用已存在的主机内置 Python，不下载解释器。无需 Python 的手动安装：复制包中的 `plugin.json`、`LICENSE`、`NOTICE` 和 `skills/` 到上述插件目录，将包中 `.agents/plugins/marketplace.json` 的插件条目合并到个人目录；把 `source.path` 改为 `./.codex/plugins/local-auto-prompt-skill`。个人目录若不存在，创建它；存在时保留其他内容。严格模式执行时仍需要主机可用的 Python。
+## 离线与显式运行时
 
-## GitHub 目录方式
+~~~powershell
+# 指定已有解释器；不兼容时自动准备专属版本，而不替换这个解释器
+.\Install-Windows.ps1 -PythonPath 'C:\path\to\python.exe'
 
-若本机 Codex 支持 `plugin marketplace` 和 `plugin add`，可直接从源码仓库安装：
+# 不复用共享解释器，准备专属运行时
+.\Install-Windows.ps1 -DedicatedRuntime
 
-```sh
-codex plugin marketplace add Saki-174/auto-prompt-skill --ref main
-codex plugin add auto-prompt-skill@auto-prompt-local
-```
+# 在联网电脑取得官方文件后，复制到新电脑离线使用
+.\Install-Windows.ps1 -DedicatedRuntime -Offline -RuntimeArchive 'C:\downloads\python-3.13.12-embed-amd64.zip'
+~~~
 
-无需运行包内安装器。不要同时安装个人本地来源与 GitHub 来源的同名技能，以免选择器出现重复项。CLI 子命令以本机 `codex plugin --help` 为准；不支持时使用上述本地安装流程。
+固定 URL 和完整 SHA-256 记录在 scripts/runtime-lock.json；预先提供的 ZIP 仍必须校验。可从 Python 官方版本页下载相同文件，不修改 lock 来绕过校验。已兼容的运行时优先复用，-RuntimeArchive 仅在需要准备运行时时读取。
 
-## 单独安装 Codex Skill
+## 隔离验收，不影响实际用户配置
 
-```sh
+~~~powershell
+.\Install-Windows.ps1 -HomeDirectory 'C:\temporary\auto-prompt-test-user' -DedicatedRuntime
+~~~
+
+该参数把程序、运行时、目录条目和备份全部指向隔离用户根目录。-DedicatedRuntime 忽略主机上的共享解释器，用于验收“目标环境为空”路径；不会创建 Windows 用户账号或模拟 ChatGPT 登录。
+
+## 升级与自定义内容
+
+关闭正在使用旧技能的聊天后，解压新包，运行同一入口。程序更新和用户配置分开处理：
+- 旧版 v1.0.0 用已审计的分发文件摘要识别；新安装用 .auto-prompt-install.json 记录程序文件归属。
+- 未修改的程序文件替换为新版；独立用户文件复制到新来源目录，内容不变。
+- 修改过或删掉的程序文件、新版路径与用户文件冲突、重复/不同来源条目、未知配置形状均停止并说明问题。
+- marketplace 的原名称、其他条目和本项目非 source 自定义字段保留，不拼接 JSON 文本。
+- 将自定义规则存入单独的 user/ 或其他独立文件便于保存。保存并不代表自动应用；使用时明确引用。不要把机器配置或个人偏好提交到公开仓库。
+
+遇到程序文件冲突：先单独保留你的修改并对比原版；由你决定迁入独立文件还是修改程序。将程序文件恢复为已识别的原分发版本后重试。不要删除归属清单来强制覆盖。安装器没有忽略冲突的 force 模式。
+
+## 失败与回滚
+
+可捕获的安装写入失败会自动恢复程序、marketplace 和运行时登记。下载的新专属 Python 可保留为未引用文件，旧运行时与共享依赖不被删除。事务目录保留证据与旧文件，便于人工恢复。
+
+使用打印出的 transaction ID：
+~~~powershell
+.\Install-Windows.ps1 -Rollback 0123456789abcdef0123456789abcdef
+~~~
+示例 ID 必须替换为你本次安装的实际 ID；隔离安装回滚时同时传原 -HomeDirectory。
+
+安装后若你修改了来源目录或其他插件更新了同一 marketplace，自动回滚会报告冲突并停止，不覆盖后来的内容。先比较事务 before/ 与当前文件，合并本项目的必要恢复项。不要整份覆盖客户端配置。
+
+进程被强制结束/断电：关闭仍在运行的安装器，检查项目 install.lock 中记录的 PID 确已结束；仅删除 .codex/auto-prompt/install.lock 这个锁文件，再使用对应事务 ID 回滚。applying 状态仅在当前文件仍等于事务的旧态或计划新态时允许恢复；备份摘要也会检查。人工改动过的中间态需对比处理。
+
+回滚后在 ChatGPT 刷新/重新安装本项目插件并新建聊天，确认加载旧版本。宿主管理的缓存不是安装器的事务对象。
+
+## 常见问题
+
+- 下载失败/TLS 或代理错误：修复联网环境后重新运行，或用官方 ZIP 和 -RuntimeArchive；不要关闭证书校验。
+- SHA-256 不匹配：安装失败，原 ZIP 保留供检查。另取官方同版本 ZIP；不要编辑校验值接受损坏文件。
+- 依赖缺失或已有 Python 不兼容：安装器准备专属版本；如果宿主后来删除了复用的 Python，重新运行入口即可修复指针。
+- Windows ARM64/32 位：自动准备未验收，会明确停止。可使用兼容 Python 的手动安装路径，但本次不保证该平台宿主表现。
+- 只有 v1.0.0 出现：来源已更新不代表宿主缓存已刷新，按客户端实际支持的刷新/重装本插件方式处理。
+- 没有结构化提问工具：技能改用文字选项，无需额外插件。
+- 严格模式无法执行：明确报告未运行；修复运行时或选择灵活模式，不以模型结果冒称严格输出。
+- 目录是符号链接/junction：安装器拒绝自动写入，选择普通目录；不更改系统设置来绕过。
+- 隔离目录路径过长：Windows PowerShell 5.1 解压可能受 260 字符限制，选择较短的 -HomeDirectory；安装器会说明路径问题，不修改全局长路径设置。
+
+## 卸载
+
+1. 在 ChatGPT 的 Plugins 中仅卸载/禁用 Auto Prompt Skill。
+2. 如需移除本地来源，先备份后，仅从个人 marketplace.json 的 plugins 数组移除 name 为 auto-prompt-skill 且 source 指向本项目的条目，保留所有其他内容。
+3. 仅删除/移走 .codex/plugins/local-auto-prompt-skill；先保留其中的独立自定义文件。
+4. 确认不再使用本项目后，可删除/移走 .codex/auto-prompt 专属运行时、缓存和事务备份。不要删除共享 Python 或 .codex、.agents 整个目录。
+5. 不操作旧 Auto Prompt 部署、CYX-MEMORY 或其他插件。
+
+## 保留的手动兼容路径
+
+已有 Python 3.9–3.14 时：
+~~~sh
+python scripts/install.py --mode plugin
 python scripts/install.py --mode skill
-```
+~~~
+skill 模式安装到 .agents/skills/auto-prompt，保留旧版行为；不要与插件方式重复启用。本轮没有新增其他宿主的专门适配，也没有自动为 macOS/Linux 准备解释器。
 
-Windows 也可运行 `Install-Windows.ps1 -Mode skill`。只复制到 `~/.agents/skills/auto-prompt/`，不改插件目录或其他配置。手动方式：解压 `auto-prompt-1.0.0-skill.zip`，把 `auto-prompt` 文件夹放入 `.agents/skills/`。这是单技能安装，不要再安装同一插件版本。
-
-## 远程／云端 Work
-
-本地安装不会把文件自动部署到其他电脑或未连接的云端执行环境。另一台计算机需要在其自身用户目录安装；本地 Work 需要连接该电脑。云端使用时，需通过账号支持的插件导入方式安装该纯 Skill 包，或把 Skill 放入获准的云端工作环境。
-
-工作区管理员有插件导入／提交入口时，可使用 `auto-prompt-skill-1.0.0-plugin.zip`。入口及角色权限由实际账号决定；本项目没有提交到 OpenAI 公共插件目录，也不保证所有账号存在任意 ZIP 的上传入口。
-
-## 更新与恢复
-
-同一内容重装不重复增加目录条目。替换已有技能或插件时保留 `.backup-<UTC时间>` 目录，修改个人 marketplace 前保留对应备份文件。安装器只接受目标名称一致的已有目录；遇到同名插件来自不同路径会报错并保留原配置。
-
-恢复时关闭使用该插件的客户端，把安装器打印的备份复制回相应目录，保留当前版本直到确认恢复成功。插件缓存由客户端管理；恢复来源后重新加载或重装插件。不要恢复整个 `.codex/config.toml` 来回滚本项目。
-
-卸载插件可在 Plugins 中选择 Auto Prompt Skill，或使用本机支持的 `codex plugin remove`；个人源目录条目需单独移除。只移除此项目的条目或技能目录，不删除整个 `.agents` 或 `.codex`。
-
-官方路径依据：[本地技能](https://learn.chatgpt.com/docs/build-skills)、[本地插件目录](https://developers.openai.com/plugins/build/plugins)。
+来源：[官方本地插件目录](https://developers.openai.com/plugins/build/plugins)、[技能发现与调用](https://learn.chatgpt.com/docs/build-skills)。

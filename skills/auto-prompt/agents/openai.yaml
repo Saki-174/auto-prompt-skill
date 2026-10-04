@@ -1,6 +1,6 @@
 interface:
   display_name: "Auto Prompt"
   short_description: "将 Agent 与原始需求转为规范提示词，支持离线严格模板和当前模型灵活改写"
-  default_prompt: "使用 $auto-prompt 将以下原始需求转换为适合目标 Agent 的规范提示词。"
+  default_prompt: "使用 $auto-prompt 引导我把口语化需求整理成提示词。"
 policy:
   allow_implicit_invocation: true

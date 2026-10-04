@@ -51,15 +51,15 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(catalog.read_text(encoding="utf-8"), original)
             self.assertFalse((home / ".codex/plugins/local-auto-prompt-skill").exists())
 
-    def test_skill_update_keeps_recoverable_backup(self):
+    def test_skill_update_preserves_modified_program_by_reporting_conflict(self):
         with tempfile.TemporaryDirectory() as folder:
             result = installer.install("skill", Path(folder))
             target = Path(result["path"])
             manifest = target / "SKILL.md"
             manifest.write_text(manifest.read_text(encoding="utf-8") + "\nOld local custom rule.\n", encoding="utf-8")
-            second = installer.install("skill", Path(folder))
-            self.assertIn("Old local custom rule", (Path(second["backup"]) / "SKILL.md").read_text(encoding="utf-8"))
-            self.assertNotIn("Old local custom rule", manifest.read_text(encoding="utf-8"))
+            with self.assertRaisesRegex(ValueError, "customized program files"):
+                installer.install("skill", Path(folder))
+            self.assertIn("Old local custom rule", manifest.read_text(encoding="utf-8"))
 
 
 class ReleaseTests(unittest.TestCase):

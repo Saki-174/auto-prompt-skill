@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "commit": "41c9f0e5a2dc820efcfea1dc0a14a92f8712aa55",
+  "files": {
+    "LICENSE": "a7a6bce0b59372837d203fb756f550b233d2ad77848f96196f14d0cc5026dd23",
+    "NOTICE": "9dafca6cd7b632e979f48049203eb14e8f15bda5015e9bf8683c8886154cb85d",
+    "plugin.json": "02415b60ef508e4aaa56d501f929203a458b83f5d0fad2c343329306455310a6",
+    "skills/auto-prompt/LICENSE": "a7a6bce0b59372837d203fb756f550b233d2ad77848f96196f14d0cc5026dd23",
+    "skills/auto-prompt/NOTICE": "9dafca6cd7b632e979f48049203eb14e8f15bda5015e9bf8683c8886154cb85d",
+    "skills/auto-prompt/SKILL.md": "7e7fdba7e00133de678ce23d0f706776248ce016babae1ad94c9b282979685d9",
+    "skills/auto-prompt/agents/openai.yaml": "2ecdfb6105c7a117be6dedab2cfd86bfbbf4353362eb4987d934ce589416591a",
+    "skills/auto-prompt/references/input.md": "b747625e998f39d9e9392ced5f2ea7c02444182c4e15b5c8e5f4c76bfe0f462d",
+    "skills/auto-prompt/scripts/render_prompt.py": "f57b5cefbe1938864ad6fc4fc4ec1ddaf17827d250e8ab300c1903ae207e23a5",
+    "skills/auto-prompt/templates/en-development.txt": "eb081443f32291ca718ee2fe233d35992a95498eeabfe65c11c5f636916e3b7b",
+    "skills/auto-prompt/templates/en-general.txt": "bca4b01d5adc100141e3796a637e799a97f801e3824b1034023b1d4b39299c1e",
+    "skills/auto-prompt/templates/zh-development.txt": "ef076a031e79a76ab568950d97ab4ba1d69ff25edeb60fa524c5f02dad7e9669",
+    "skills/auto-prompt/templates/zh-general.txt": "d5a427a264947deaf6de48b69a7820646aef88590f540ec2be34f0d20c584db8"
+  }
+}

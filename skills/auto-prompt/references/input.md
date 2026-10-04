@@ -28,3 +28,9 @@
 `--format json` 返回旧 API 风格的 `optimizedPrompt` 与 `model: strict-deterministic-v1`。这是外层序列化格式，requirements 内“输出 JSON”这类文字仍保留为目标任务的要求，不自动解释成当前转换器的 CLI 参数。
 
 严格渲染不是对全文的矛盾检测。明确约束与固定模板不兼容时，先说明冲突；不要承诺严格模式已解决语义问题。灵活模式可按用户格式重写，但不能保证字节一致。
+
+## v1.0.1 模式兼容
+
+自然语言对话默认改为灵活模式；完整旧 JSON 若没有 strictMode 字段，仍按 true 处理，以保留旧调用协议。直接运行 render_prompt.py 的默认值、验证规则、profile=development 和输出字节不变。对话中自然语言的一般任务可选 general；不要仅因目标 Agent 是 Codex 就把非开发任务设为 development。
+
+严格保证范围：固定脚本版本与模板、相同 JSON 输入。严格执行不提供模型理解、翻译或无限领域适配。

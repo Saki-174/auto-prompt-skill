@@ -1,0 +1,127 @@
+[CmdletBinding()]
+param(
+    [string]$RuntimeArchive,
+    [string]$LegacyBundle,
+    [switch]$AllowDownload,
+    [Parameter(Mandatory=$true)][string]$OutputDirectory
+)
+$ErrorActionPreference = 'Stop'
+$root = Split-Path -Parent $PSScriptRoot
+$evidence = Join-Path ([IO.Path]::GetFullPath($OutputDirectory)) ('run-' + [guid]::NewGuid().ToString('N'))
+[void][IO.Directory]::CreateDirectory($evidence)
+$checks = New-Object Collections.Generic.List[object]
+$ps5 = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+$pathBefore = @([Environment]::GetEnvironmentVariable('PATH','User'), [Environment]::GetEnvironmentVariable('PATH','Machine'))
+function Check([bool]$Condition, [string]$Name) {
+    $checks.Add([pscustomobject]@{name=$Name; passed=$Condition})
+    if (-not $Condition) { throw "FAILED: $Name" }
+}
+function Setup([string[]]$Arguments, [int]$ExpectedExit=0) {
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $log = @(& $ps5 -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'Install-Windows.ps1') @Arguments 2>&1)
+        $code = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $previousPreference }
+    $text = ($log | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+    $logPath = Join-Path $evidence ('setup-' + [guid]::NewGuid().ToString('N') + '.txt')
+    [IO.File]::WriteAllText($logPath, $text, (New-Object Text.UTF8Encoding($false)))
+    if ($code -ne $ExpectedExit) { throw "Setup exit $code, expected $ExpectedExit. $text" }
+    if ($code -eq 0) { return ($text | ConvertFrom-Json) }
+    return $text
+}
+function Snapshot([string]$HomeDirectory) {
+    $target = Join-Path $HomeDirectory '.codex\plugins\local-auto-prompt-skill'
+    $files = @{}
+    foreach ($item in Get-ChildItem -LiteralPath $target -Recurse -File) {
+        $files[$item.FullName.Substring($target.Length + 1)] = (Get-FileHash -LiteralPath $item.FullName).Hash
+    }
+    $catalog = Join-Path $HomeDirectory '.agents\plugins\marketplace.json'
+    return @{files=$files; catalog=(Get-FileHash -LiteralPath $catalog).Hash}
+}
+$passed = $false
+$failure = $null
+try {
+    if (-not $RuntimeArchive -and -not $AllowDownload) { throw 'Supply -RuntimeArchive or explicitly choose -AllowDownload.' }
+    $fresh = Join-Path $evidence 'empty-user'
+    $argsFresh = @('-HomeDirectory',$fresh,'-DedicatedRuntime')
+    if ($RuntimeArchive) { $argsFresh += @('-Offline','-RuntimeArchive',[IO.Path]::GetFullPath($RuntimeArchive)) }
+    $first = Setup $argsFresh
+    $runtimeFile = Join-Path $fresh '.codex\auto-prompt\runtime.json'
+    $runtime = Get-Content -LiteralPath $runtimeFile -Raw -Encoding UTF8 | ConvertFrom-Json
+    Check ($runtime.python.StartsWith($fresh)) 'empty home gets a dedicated runtime'
+    Check (($runtime.version -join '.') -eq '3.13.12') 'fixed Python version'
+    Check (Test-Path (Join-Path (Split-Path $runtime.python) 'LICENSE.txt')) 'upstream runtime license retained'
+    $runtimeHash = (Get-FileHash -LiteralPath $runtime.python).Hash
+    $fixture = (Get-Content -LiteralPath (Join-Path $root 'tests\fixtures\legacy.json') -Raw -Encoding UTF8 | ConvertFrom-Json).cases[0]
+    $inputFile = Join-Path $evidence 'input.json'
+    [IO.File]::WriteAllText($inputFile, ($fixture.input | ConvertTo-Json -Depth 10), (New-Object Text.UTF8Encoding($false)))
+    $runner = Join-Path $first.path 'skills\auto-prompt\scripts\Run-Strict.ps1'
+    $outputs = @((Join-Path $evidence 'strict-1.txt'),(Join-Path $evidence 'strict-2.txt'))
+    foreach ($output in $outputs) {
+        & $ps5 -NoProfile -ExecutionPolicy Bypass -File $runner -HomeDirectory $fresh -InputPath $inputFile -OutputPath $output
+        Check ($LASTEXITCODE -eq 0) 'installed strict launcher executes'
+        Check ((Get-FileHash -LiteralPath $output).Hash.ToLowerInvariant() -eq $fixture.sha256) 'installed output matches legacy fixture'
+    }
+    $second = Setup @('-HomeDirectory',$fresh,'-DedicatedRuntime','-Offline')
+    Check (-not $second.changed -and $null -eq $second.transaction) 'repeat installation is idempotent'
+    $reuse = Join-Path $evidence 'reuse-user'
+    $reuseResult = Setup @('-HomeDirectory',$reuse,'-PythonPath',$runtime.python,'-Offline')
+    $reuseRuntime = Get-Content (Join-Path $reuse '.codex\auto-prompt\runtime.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    Check ($reuseRuntime.python -eq $runtime.python) 'compatible runtime reused'
+    Check (-not (Test-Path (Join-Path $reuse '.codex\auto-prompt\runtimes'))) 'no redundant runtime prepared'
+    $archive = if ($RuntimeArchive) { [IO.Path]::GetFullPath($RuntimeArchive) } else { Join-Path $fresh '.codex\auto-prompt\downloads\python-3.13.12-embed-amd64.zip' }
+    $incompatible = Join-Path $evidence 'incompatible-user'
+    # A known executable unable to satisfy the Python probe exercises the rejection branch.
+    $badResult = Setup @('-HomeDirectory',$incompatible,'-PythonPath',$ps5,'-Offline','-RuntimeArchive',$archive)
+    $newRuntime = Get-Content (Join-Path $incompatible '.codex\auto-prompt\runtime.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    Check ($newRuntime.python.StartsWith($incompatible)) 'failed compatibility probe prepares dedicated runtime'
+    $corrupt = Join-Path $evidence 'corrupt.zip'
+    [IO.File]::WriteAllBytes($corrupt,[byte[]](1,2,3,4))
+    $corruptHome = Join-Path $evidence 'corrupt-user'
+    $badMessage = Setup @('-HomeDirectory',$corruptHome,'-DedicatedRuntime','-Offline','-RuntimeArchive',$corrupt) 2
+    Check ($badMessage -match 'checksum mismatch') 'corrupt runtime is rejected with recovery message'
+    Check (-not (Test-Path (Join-Path $corruptHome '.codex\plugins\local-auto-prompt-skill'))) 'checksum failure installs no program'
+    $offlineHome = Join-Path $evidence 'offline-user'
+    $offlineMessage = Setup @('-HomeDirectory',$offlineHome,'-DedicatedRuntime','-Offline') 2
+    Check ($offlineMessage -match 'No compatible Python') 'offline missing runtime fails clearly'
+    if ($LegacyBundle) {
+        Check ((Get-FileHash -LiteralPath $LegacyBundle).Hash.ToLowerInvariant() -eq 'fdf4d98179062f490d180ce4ba59013fb37d071f4cd56d4ae3a14d02ca343d94') 'v1.0.0 bundle integrity'
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $legacySource = Join-Path $evidence 'legacy-source'
+        [IO.Compression.ZipFile]::ExtractToDirectory([IO.Path]::GetFullPath($LegacyBundle),$legacySource)
+        $legacy = Join-Path $evidence 'legacy-user'
+        & $runtime.python -I (Join-Path $legacySource 'auto-prompt-skill\scripts\install.py') --home $legacy | Out-Null
+        Check ($LASTEXITCODE -eq 0) 'real v1.0.0 installation prepared'
+        $target = Join-Path $legacy '.codex\plugins\local-auto-prompt-skill'
+        [void][IO.Directory]::CreateDirectory((Join-Path $target 'user'))
+        [IO.File]::WriteAllText((Join-Path $target 'user\keep.txt'),'custom preference')
+        $catalogPath = Join-Path $legacy '.agents\plugins\marketplace.json'
+        $catalog = Get-Content $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $catalog.plugins += [pscustomobject]@{name='unrelated'; source='./keep'}
+        [IO.File]::WriteAllText($catalogPath,($catalog | ConvertTo-Json -Depth 10),(New-Object Text.UTF8Encoding($false)))
+        $before = Snapshot $legacy
+        $upgrade = Setup @('-HomeDirectory',$legacy,'-PythonPath',$runtime.python,'-Offline')
+        Check ($upgrade.version -eq '1.0.1') 'upgrade installs v1.0.1'
+        Check ((Get-Content (Join-Path $target 'user\keep.txt') -Raw) -eq 'custom preference') 'custom file preserved during real upgrade'
+        $newCatalog = Get-Content $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        Check (@($newCatalog.plugins | Where-Object name -eq 'unrelated').Count -eq 1) 'unrelated plugin preserved'
+        $rolled = Setup @('-HomeDirectory',$legacy,'-PythonPath',$runtime.python,'-Offline','-Rollback',$upgrade.transaction)
+        $after = Snapshot $legacy
+        Check ($before.catalog -eq $after.catalog) 'rollback restores exact old catalog bytes'
+        Check (($before.files.Count -eq $after.files.Count) -and (@($before.files.Keys | Where-Object { $before.files[$_] -ne $after.files[$_] }).Count -eq 0)) 'rollback restores exact v1.0.0 and user files'
+        Check (-not (Test-Path (Join-Path $legacy '.codex\auto-prompt\runtime.json'))) 'rollback removes newly added runtime pointer'
+    }
+    Check ((Get-FileHash -LiteralPath $runtime.python).Hash -eq $runtimeHash) 'reused interpreter not modified'
+    $pathAfter = @([Environment]::GetEnvironmentVariable('PATH','User'),[Environment]::GetEnvironmentVariable('PATH','Machine'))
+    Check (($pathBefore[0] -ceq $pathAfter[0]) -and ($pathBefore[1] -ceq $pathAfter[1])) 'global user and machine PATH unchanged'
+    $passed = $true
+} catch {
+    $failure = $_.Exception.Message
+} finally {
+    $report = @{passed=$passed; failure=$failure; powershell=$PSVersionTable.PSVersion.ToString(); os=[Environment]::OSVersion.VersionString; checks=$checks.ToArray(); legacyChecked=[bool]$LegacyBundle; dedicatedDownloadRequested=[bool]$AllowDownload; scope='Isolated user directories on this Windows host; not a clean VM or ChatGPT UI acceptance.'}
+    $reportPath = Join-Path $evidence 'windows-acceptance.json'
+    [IO.File]::WriteAllText($reportPath,($report | ConvertTo-Json -Depth 10),(New-Object Text.UTF8Encoding($false)))
+    Write-Output $reportPath
+}
+if (-not $passed) { throw $failure }

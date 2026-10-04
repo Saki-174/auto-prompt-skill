@@ -13,3 +13,8 @@ This repository does not include the AIDotNet/auto-prompt application,
 its database, its custom skprompt.txt, its Docker deployment, model files,
 or tunnel binaries. Its application license is not relicensed here.
 No affiliation with or endorsement by OpenAI is implied.
+
+v1.0.1 clarification mechanism adapted from mattpocock/skills, commit
+24fe0ef7737efae15c87225755e9f6f5965e4888, skills/productivity/grill-me
+and skills/productivity/grilling. Copyright (c) 2026 Matt Pocock, MIT.
+Full upstream license and adaptation scope: skills/auto-prompt/references/grill-me-attribution.md

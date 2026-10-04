@@ -8,22 +8,9 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILL_FILES = [
-    "skills/auto-prompt/SKILL.md", "skills/auto-prompt/LICENSE", "skills/auto-prompt/NOTICE",
-    "skills/auto-prompt/agents/openai.yaml", "skills/auto-prompt/references/input.md",
-    "skills/auto-prompt/scripts/render_prompt.py",
-    "skills/auto-prompt/templates/zh-development.txt", "skills/auto-prompt/templates/zh-general.txt",
-    "skills/auto-prompt/templates/en-development.txt", "skills/auto-prompt/templates/en-general.txt",
-]
-PUBLIC = [
-    "plugin.json", "LICENSE", "NOTICE", "README.md", "README.en.md",
-    "Install-Windows.ps1", "Install-Windows.cmd", ".gitignore", ".gitattributes",
-    ".agents/plugins/marketplace.json", ".github/workflows/ci.yml",
-    "scripts/install.py", "scripts/build_release.py",
-    "examples/codex.json", "examples/chatgpt.json", "examples/english.json",
-    "tests/test_render_prompt.py", "tests/test_install_release.py", "tests/fixtures/legacy.json",
-    "docs/install.md", "docs/migration.md", "docs/validation.md",
-] + SKILL_FILES
+_FILES = json.loads((ROOT / "scripts/package-files.json").read_text(encoding="utf-8"))
+SKILL_FILES = _FILES["skill"]
+PUBLIC = _FILES["bundle"]
 
 
 def files_for(entries):
