@@ -1,0 +1,6 @@
+{
+  "targetAgent": "Codex",
+  "rawPrompt": "帮我写一个 Unity 对象池。",
+  "requirements": "只允许修改 Assets/Scripts。不要新增依赖。",
+  "profile": "development"
+}

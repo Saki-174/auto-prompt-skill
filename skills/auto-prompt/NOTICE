@@ -1,0 +1,15 @@
+Auto Prompt Skill
+
+The strict renderer and the four templates were ported from the user's
+local prompt-mcp-adapter/src/strictPrompt.ts at commit d77c102.
+That adapter declares the ISC license in its package.json.
+Changes: TypeScript to standard-library Python, external template files,
+CLI/JSON serialization, explicit schema validation, and portable packaging.
+
+The new skill instructions, installers, tests, examples, documentation and
+release tooling are part of this repository under the ISC License.
+
+This repository does not include the AIDotNet/auto-prompt application,
+its database, its custom skprompt.txt, its Docker deployment, model files,
+or tunnel binaries. Its application license is not relicensed here.
+No affiliation with or endorsement by OpenAI is implied.

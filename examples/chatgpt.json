@@ -1,0 +1,6 @@
+{
+  "targetAgent": "ChatGPT Work",
+  "rawPrompt": "根据我提供的会议记录，整理决定、行动项及待确认信息。",
+  "requirements": "用中文。保留已给出的负责人和截止时间，不推测缺失值。",
+  "profile": "general"
+}

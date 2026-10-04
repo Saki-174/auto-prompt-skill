@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "auto-prompt-skill",
+  "version": "1.0.0",
+  "description": "Turn an agent and a raw request into a faithful structured prompt, with an offline deterministic renderer.",
+  "author": {"name": "Saki-174", "url": "https://github.com/Saki-174"},
+  "repository": "https://github.com/Saki-174/auto-prompt-skill",
+  "homepage": "https://github.com/Saki-174/auto-prompt-skill",
+  "license": "ISC",
+  "keywords": ["skills", "prompt", "chatgpt-work", "codex", "offline"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Auto Prompt Skill",
+        "shortDescription": "Agent＋原始需求 → 规范提示词；无需常驻服务",
+        "longDescription": "包含规范化 Skill 与离线中英文严格模板脚本，适用于 ChatGPT Work 和 Codex。",
+        "developerName": "Saki-174",
+        "category": "Productivity",
+        "defaultPrompt": ["把以下需求转换为适合 Codex 的规范提示词。", "把以下需求转换为适合 ChatGPT Work 的规范提示词。"]
+      }
+    }
+  }
+}

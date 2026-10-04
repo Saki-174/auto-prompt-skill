@@ -1,0 +1,6 @@
+{
+  "targetAgent": "ChatGPT",
+  "rawPrompt": "Summarize the supplied document.",
+  "requirements": "Use concise English. Preserve the supplied facts.",
+  "profile": "general"
+}

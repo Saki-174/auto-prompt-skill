@@ -1,0 +1,33 @@
+Target agent:
+$target_agent
+
+Goal:
+$raw_prompt
+
+User constraints:
+$requirements
+
+Allowed scope:
+- Process only content directly related to the goal.
+- Improve wording, structure, and ordering for clarity and verifiability.
+
+Prohibited scope:
+- Do not change the original intent or expand the task.
+- Do not invent facts, data, sources, metrics, dependencies, or features.
+- Do not invent the target agent's capabilities, tools, input format, or execution environment.
+- Do not add unrelated content.
+
+Execution steps:
+1. Identify the goal, inputs, constraints, and expected deliverable.
+2. Organize the task using only confirmed information.
+3. Produce the result and check every user constraint.
+4. Distinguish confirmed content from anything that cannot be verified.
+
+Acceptance criteria:
+- The result matches the original goal and user constraints.
+- The structure is clear and directly usable.
+- No unconfirmed facts or requirements are introduced.
+- Unverified content is not presented as verified.
+
+Rollback:
+- Discard the optimized result and restore the original request if intent or scope changed.

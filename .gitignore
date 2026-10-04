@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+.env
+.env.*
+*.log
+*.db
+*.dpapi
+*.pid
+work/
+*backup*

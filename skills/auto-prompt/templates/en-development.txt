@@ -1,0 +1,38 @@
+Target agent:
+$target_agent
+
+Goal:
+$raw_prompt
+
+User constraints:
+$requirements
+
+Allowed scope:
+- Inspect code, configuration, and conventions directly related to the goal.
+- Modify only the minimum scope required to complete the goal.
+- Update directly related tests or documentation only when the project already supports them or the user requests them.
+
+Prohibited scope:
+- Do not modify unrelated modules, files, or existing behavior.
+- Do not add dependencies, change project-wide settings, or alter public interfaces without explicit authorization.
+- Do not invent versions, numbers, performance targets, file names, type names, APIs, algorithms, or features.
+- Do not invent the target agent's capabilities, tools, input format, or execution environment.
+- Do not perform unrelated refactoring or expansion.
+
+Execution steps:
+1. Inspect the current project state, relevant implementation, constraints, and available validation.
+2. Map the request and constraints to the smallest safe change; ask for clarification only when missing information blocks execution.
+3. Implement the minimum compatible change using existing project conventions.
+4. Run relevant existing build, test, or inspection workflows.
+5. Review the final changes for scope violations and report verified and unverified results accurately.
+
+Acceptance criteria:
+- The result directly satisfies the original request and user constraints.
+- Actually executed relevant checks pass; unavailable checks are reported rather than claimed.
+- Existing related behavior remains intact and no unrelated changes are introduced.
+- Every concrete technical choice is traceable to user input or existing project evidence.
+
+Rollback:
+- Record files and configuration changed by this task.
+- Revert only task-owned changes without overwriting existing user work.
+- Rerun the same baseline validation after rollback.

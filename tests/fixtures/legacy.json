@@ -1,0 +1,288 @@
+{
+  "source": {
+    "commit": "d77c102",
+    "sha256": "b2d90f4a97ee7f8ba145dfc00bdad0f956c7b6ce44cd6201a68a0df1841dffff"
+  },
+  "cases": [
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "",
+        "profile": "development"
+      },
+      "sha256": "268d8adbe562487b6346baee2efdd10b6f94b0e3e8a3d808f36e4aa093c6fab1"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "Use concise English.",
+        "profile": "development"
+      },
+      "sha256": "420fe9577f410000c2b66a72a7f46e915410a86f2ef7762d3f9c41196b40d2b6"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "development"
+      },
+      "sha256": "0a601fc64099f1c2691e2c6220e965fa1b9ee924f978b50bc0d7839c99c71348"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "development"
+      },
+      "sha256": "30568767b92131de6fa167bd0a7cafb067140be640d088cb06e7f904725ddb54"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "",
+        "profile": "development",
+        "targetAgent": "Codex"
+      },
+      "sha256": "572a63237e7ae27bdb6b7aa378347db062a778c018b620cc0e9c594ccbea0497"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "Use concise English.",
+        "profile": "development",
+        "targetAgent": "Codex"
+      },
+      "sha256": "eb378c414abd476292aebf1408de13fd1241d4a396d9b5311bfa4b8937cb910f"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "development",
+        "targetAgent": "Codex"
+      },
+      "sha256": "4af6276e5faad1d8e94cf2a5861526dc10937f98f97fb3fc7745cc1d2e639f22"
+    },
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "development",
+        "targetAgent": "Codex"
+      },
+      "sha256": "afee07a211f4c92b915bd62e0dc9d16c851cedc64ce850bee78c3fc77385ba38"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "",
+        "profile": "development",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "c9d9c79f36be92e7c17420af4405fab83095b9608890f9cd81afb16630c6526c"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "Use concise English.",
+        "profile": "development",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "e1b13a36dd0f4c859b3c2cf60cd8fa6ba9f7768b67ad1569f5e952534f641967"
+    },
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "development",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "05c134fc489f6bc4405ffac8ea45c117f38aa82d015b88e37f0e35938c92ee4d"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "development",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "f36add920421cbc3f5240b88e1933ff7f603cc8b5396580dea88facadcd786e3"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "",
+        "profile": "development",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "22e31678758c57387af8018bf3fe9bc5ec38e5e2fd45879553f1bc972b98081c"
+    },
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "Use concise English.",
+        "profile": "development",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "fcb94315fad0ce2e412b797b5e7773d98ea87d5da4c5baf084c7325174b3aa47"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "development",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "a295797d88939ca22939244b0c82ad263064906c66dc512a86cdd78edf2654f7"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "development",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "72972c2fd275a66c0b156cda4f20e15117e04bcc49791630f39c8b211581000e"
+    },
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "",
+        "profile": "general"
+      },
+      "sha256": "9fe77e976e795b3f11efedcaf3415baae982669cbeffcc8409b7ff049c02876b"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "Use concise English.",
+        "profile": "general"
+      },
+      "sha256": "813f053fa8c3602f22ffdeeed2d6c1e88900408f27873c10489ccb698cdd4e38"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "general"
+      },
+      "sha256": "46b49e705eb76d94e9786e6158e84d4f79f0266e6026b55a3fd146176dcf3a97"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "general"
+      },
+      "sha256": "bf7ccedc7588e25c81d9442dd6dd324950ecbd08c17036d1fa976dd066fe245a"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "",
+        "profile": "general",
+        "targetAgent": "Codex"
+      },
+      "sha256": "6f143c36a407ad8ceb4169878f4dee23adc62cc434947893f4e08dad65c3f665"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "Use concise English.",
+        "profile": "general",
+        "targetAgent": "Codex"
+      },
+      "sha256": "424787f97d492cfc4d6e4cc565b26602ced0d25a1b91f2d8e89b224c263f2675"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "general",
+        "targetAgent": "Codex"
+      },
+      "sha256": "0b6b40fad138a69ae4c43cc7ef869b1cbca96eaa26a09e2ce6f6616d461c8bf1"
+    },
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "general",
+        "targetAgent": "Codex"
+      },
+      "sha256": "a2fb9a6ea7c76d345dabc27e4d10c75630ecc9d4d3e7c002c029a7b098e5a0c2"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "",
+        "profile": "general",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "7341e314b71d980805c86c471ab3158c66c5862a7c96e99f10e86432208b9032"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "Use concise English.",
+        "profile": "general",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "d62e95b419b9ec96f9a2de62cbfbb5565550445c8cf107dae3661d187e078f1e"
+    },
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "general",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "01ceceed611ab02586b66ee08e7f63819703fc42dcdbd43800f311a1a1219ac5"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "general",
+        "targetAgent": "  ChatGPT   Work  "
+      },
+      "sha256": "7aa73859316348143a92918a3e4191ead7ab46351e39186f6b808bee9c34365d"
+    },
+    {
+      "input": {
+        "rawPrompt": "  保留中文、emoji 🧩 和原始标点。  ",
+        "requirements": "",
+        "profile": "general",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "8d4a4b90139f694201e0037525d01da688e16c9a40c735aa151fab6dab1bfc4a"
+    },
+    {
+      "input": {
+        "rawPrompt": "帮我写一个Unity对象池",
+        "requirements": "Use concise English.",
+        "profile": "general",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "05f0fdfd3ba9e6bd6c8f0968310df69c29c8359a6d219b8b13b9e49430b6c7d6"
+    },
+    {
+      "input": {
+        "rawPrompt": "整理已提供的会议记录。\r\n保留负责人。",
+        "requirements": "保持中文；缺失信息标记为待确认；不要虚构项目文件、接口、依赖、版本、数值或功能。",
+        "profile": "general",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "9d694b4a2f24168d819adc99523c71141d1cc4bccbc3ba2b625f86921df9f31a"
+    },
+    {
+      "input": {
+        "rawPrompt": "Keep {context}, $requirements and ${raw_prompt} exactly as supplied.",
+        "requirements": "Use English. Mark missing information as \"To be confirmed\". Do not invent project files or APIs.",
+        "profile": "general",
+        "targetAgent": "ExampleAgent"
+      },
+      "sha256": "e809463a4e1524bed8a0afb45278640d3c41839b721531d97c709f4c947b6134"
+    }
+  ]
+}
