@@ -21,7 +21,7 @@
 ~~~powershell
 .\Install-Windows.ps1
 ~~~
-4. 安装器输出实际 path、marketplaceName、transaction（有变更时）和下一步操作。没有报成功时按错误处理，不跳过。
+4. CMD 显示中文摘要：安装位置、Python、自检结果、事务 ID（有变更时）和客户端待启用步骤。安装器实际调用已安装的严格启动器，核对固定样例摘要；自检失败不报告成功，有本次写入时按事务规则恢复。没有报成功时按错误处理，不跳过。
 5. 重启 ChatGPT 桌面客户端，在 Plugins 选择对应个人本地来源，安装或刷新 Auto Prompt Skill。已有旧版本时确认实际缓存/已加载技能版本变为 1.0.2；只有来源目录变化不算客户端完成升级。
 6. 新建连接本机的聊天，选择 Auto Prompt，执行 [验收清单](chatgpt-acceptance.md)。
 
@@ -37,7 +37,11 @@
 - 官方 ZIP 缓存：.codex/auto-prompt/downloads/
 - 事务备份：.codex/auto-prompt/transactions/<ID>/
 
-安装器不编辑整个客户端 config.toml，也不自动复制其他插件。运行时不加 PATH，不安装 pip，不通过 py/pymanager 引发共享 Python 安装。已存在的专属固定版本优先；否则使用兼容宿主/已有 Python；找不到才下载。嵌入式包保留原 LICENSE.txt 和依赖文件。
+安装器不编辑整个客户端 config.toml，也不自动复制其他插件。运行时不加 PATH，不安装 pip，不通过 py/pymanager 引发共享 Python 安装。已存在的专属固定版本优先；没有显式指定 Python 时，先读取 UTF-8 runtime.json 并验证已登记解释器，再查宿主固定路径及 PATH；登记损坏、文件不存在或不兼容时继续发现，找不到才准备专属运行时。嵌入式包保留原 LICENSE.txt 和依赖文件。
+
+Install-Windows.ps1 默认仍输出机器可读 JSON，新增 selfTest.status=passed 表示启动器自检通过；传 -Interactive 可显示中文摘要，CMD 自动选择此模式。直接 Python 安装入口保持兼容，仅显式 --check-launcher 才执行 Windows 自检。回滚恢复旧文件，可能恢复旧版限制，不把回滚报告成新版自检通过。
+
+CMD 仅在自身子进程中重建 Windows PowerShell 模块搜索环境，避免继承 PowerShell 7 的 PSModulePath 导致 Get-FileHash 等命令不可用，不更改用户或系统环境变量。
 
 ## 离线与显式运行时
 
@@ -63,6 +67,8 @@
 该参数把程序、运行时、目录条目和备份全部指向隔离用户根目录。-DedicatedRuntime 忽略主机上的共享解释器，用于验收“目标环境为空”路径；不会创建 Windows 用户账号或模拟 ChatGPT 登录。
 
 ## 升级与自定义内容
+
+本次按用户要求保持 1.0.2 版本号。旧 1.0.2 也需重新下载附件，核对新的 SHA256SUMS.txt，运行安装器并刷新客户端；程序文件归属按内容摘要判断，不只比较版本号。若客户端仍使用旧缓存，应通过客户端支持的本插件刷新/重装入口重新加载，不删除整个插件缓存。发布说明记录修订来源；旧提交仍可用其完整提交号检出。
 
 关闭正在使用旧技能的聊天后，解压新包，运行同一入口。程序更新和用户配置分开处理：
 - 旧版 v1.0.0 用已审计的分发文件摘要识别；新安装用 .auto-prompt-install.json 记录程序文件归属。

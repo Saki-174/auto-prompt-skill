@@ -73,7 +73,18 @@ function Get-APPython {
         if ($PythonPath) {
             $candidates += $PythonPath
         } else {
-            # Host-provided runtime first. Do not invoke py/pymanager or Store aliases:
+            # Reuse a previous explicit/host interpreter even when it is off PATH.
+            $receipt = Join-Path $state 'runtime.json'
+            Assert-APOwned $HomeDirectory $receipt
+            if (Test-Path -LiteralPath $receipt -PathType Leaf) {
+                try {
+                    $registered = Get-Content -LiteralPath $receipt -Raw -Encoding UTF8 | ConvertFrom-Json
+                    if ($registered.schema -eq 1 -and $registered.python -is [string] -and [IO.Path]::IsPathRooted($registered.python)) {
+                        $candidates += $registered.python
+                    }
+                } catch { Write-Verbose 'Invalid runtime registration; continue runtime discovery.' }
+            }
+            # Then discover host/PATH runtimes. Do not invoke py/pymanager or Store aliases:
             # these launchers can install or update a shared runtime behind our back.
             $candidates += (Join-Path $HomeDirectory '.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe')
             foreach ($name in @('python.exe', 'python3.exe')) {

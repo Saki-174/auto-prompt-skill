@@ -268,7 +268,32 @@ def recover_attempt(home, paths, transaction, journal, attempted):
         raise ValueError("recovery preserved later edits to: " + ", ".join(sorted(conflicts)))
 
 
-def install(mode, home, python_path=None):
+def check_windows_launcher(home, mode):
+    if os.name != "nt":
+        raise ValueError("launcher self-check requires Windows")
+    target = locations(home, mode)["target"]
+    runner = target / ("skills/auto-prompt/scripts/Run-Strict.ps1" if mode == "plugin" else "scripts/Run-Strict.ps1")
+    sample = {"targetAgent": "ChatGPT Work", "rawPrompt": "根据我提供的会议记录，整理决定、行动项及待确认信息。",
+              "requirements": "用中文。保留已给出的负责人和截止时间，不推测缺失值。", "profile": "general", "strictMode": True}
+    expected = "650b898d02661131657e3d3f502c7bf9d0e3c0ce1f47bca85257e76d725e52d2"
+    state = home / ".codex/auto-prompt"
+    within(home, state)
+    # The launcher is Windows PowerShell 5.1; avoid inherited PS7 module paths.
+    env = {key: value for key, value in os.environ.items() if key.lower() != "psmodulepath"}
+    powershell = Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    with tempfile.TemporaryDirectory(prefix="self-check-", dir=state) as folder:
+        input_path, output_path = Path(folder) / "input.json", Path(folder) / "output.txt"
+        input_path.write_bytes(encoded(sample))
+        process = subprocess.run([str(powershell), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(runner),
+                                  "-HomeDirectory", str(home), "-InputPath", str(input_path), "-OutputPath", str(output_path)],
+                                 env=env, capture_output=True, timeout=45)
+        if process.returncode or not output_path.is_file() or digest(output_path.read_bytes()) != expected:
+            detail = process.stderr.decode("utf-8", errors="replace").strip()
+            raise ValueError("installed strict launcher self-check failed" + (": " + detail if detail else "; unexpected output"))
+    return {"status": "passed", "sha256": expected}
+
+
+def install(mode, home, python_path=None, check_launcher=False):
     home = Path(home).absolute()
     plain_path(home)
     with install_lock(home):
@@ -291,6 +316,8 @@ def install(mode, home, python_path=None):
         result["next"] = "Files and catalog ready. In ChatGPT desktop, install/refresh Auto Prompt Skill from this local source, then start a new local chat. Host login/permissions/enablement are user steps."
         result["runtime"] = json.loads(desired["runtime"])
         if before == after:
+            if check_launcher:
+                result["selfTest"] = check_windows_launcher(home, mode)
             return result
         transaction = home / ".codex/auto-prompt/transactions" / uuid.uuid4().hex
         within(home, transaction)
@@ -329,6 +356,10 @@ def install(mode, home, python_path=None):
                     write_atomic(paths[key], desired[key])
             if current_state(paths) != after:
                 raise ValueError("post-install verification failed")
+            if check_launcher:
+                result["selfTest"] = check_windows_launcher(home, mode)
+            if current_state(paths) != after:
+                raise ValueError("installation changed during launcher self-check")
             journal["status"] = "committed"
             write_atomic(transaction / "transaction.json", encoded(journal))
         except Exception as failure:
@@ -379,10 +410,29 @@ def main():
     parser.add_argument("--home", type=Path, default=Path.home())
     parser.add_argument("--python", type=Path, help="compatible interpreter selected by bootstrapper")
     parser.add_argument("--rollback", metavar="TRANSACTION_ID")
+    parser.add_argument("--check-launcher", action="store_true", help="verify the installed Windows strict launcher before committing")
+    parser.add_argument("--human", action="store_true", help="show a concise Chinese installation summary")
     args = parser.parse_args()
     try:
-        result = rollback(args.home, args.rollback) if args.rollback else install(args.mode, args.home, args.python)
-        sys.stdout.buffer.write(encoded(result))
+        result = rollback(args.home, args.rollback) if args.rollback else install(args.mode, args.home, args.python, args.check_launcher)
+        if args.human:
+            if args.rollback:
+                message = "Auto Prompt 已恢复。请在客户端刷新插件，并在新聊天确认恢复后的版本。\n"
+            else:
+                checked = result.get("selfTest", {}).get("status") == "passed"
+                message = ("Auto Prompt " + result["version"] + (" 安装完成。\n" if result["changed"] else " 文件已是当前内容，无需重复安装。\n")
+                           + ("严格脚本自检：通过。\n" if checked else "严格脚本自检：未执行。\n")
+                           + "安装位置：" + result["path"] + "\nPython：" + result["runtime"]["python"] + "\n")
+                if result["transaction"]:
+                    message += "恢复事务 ID：" + result["transaction"] + "\n"
+                if result["mode"] == "plugin":
+                    message += "客户端待启用：打开 Plugins，选择本地来源 " + result["marketplaceName"] + "，安装或刷新 Auto Prompt Skill。\n"
+                else:
+                    message += "客户端待启用：按宿主的技能发现方式加载上述目录。\n"
+                message += "然后新建本地聊天，发送：请调用 Auto Prompt 技能。文件安装和脚本自检不代表客户端已启用。\n"
+            sys.stdout.buffer.write(message.encode("utf-8"))
+        else:
+            sys.stdout.buffer.write(encoded(result))
     except (ValueError, OSError, subprocess.SubprocessError) as error:
         parser.exit(2, "Auto Prompt install: " + str(error) + "\n")
 

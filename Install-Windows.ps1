@@ -6,7 +6,8 @@ param(
     [string]$RuntimeArchive,
     [switch]$DedicatedRuntime,
     [switch]$Offline,
-    [string]$Rollback
+    [string]$Rollback,
+    [switch]$Interactive
 )
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
@@ -18,6 +19,8 @@ try {
     $runtime = Get-APPython -HomeDirectory $HomeDirectory -PackageRoot $PSScriptRoot -PythonPath $PythonPath -RuntimeArchive $RuntimeArchive -DedicatedRuntime:$DedicatedRuntime -Offline:$Offline
     $arguments = @('-I', (Join-Path $PSScriptRoot 'scripts\install.py'), '--mode', $Mode, '--home', $HomeDirectory, '--python', $runtime.python)
     if ($Rollback) { $arguments += @('--rollback', $Rollback) }
+    else { $arguments += '--check-launcher' }
+    if ($Interactive) { $arguments += '--human' }
     & $runtime.python @arguments
     if ($LASTEXITCODE -ne 0) { throw "Installer failed (exit $LASTEXITCODE). Read the conflict/recovery message above." }
     exit 0

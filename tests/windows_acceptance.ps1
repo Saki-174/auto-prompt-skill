@@ -51,6 +51,7 @@ try {
     $argsFresh = @('-HomeDirectory',$fresh,'-DedicatedRuntime')
     if ($RuntimeArchive) { $argsFresh += @('-Offline','-RuntimeArchive',[IO.Path]::GetFullPath($RuntimeArchive)) }
     $first = Setup $argsFresh
+    Check ($first.selfTest.status -eq 'passed') 'installer verifies the real strict launcher before success'
     $runtimeFile = Join-Path $fresh '.codex\auto-prompt\runtime.json'
     $runtime = Get-Content -LiteralPath $runtimeFile -Raw -Encoding UTF8 | ConvertFrom-Json
     Check ($runtime.python.StartsWith($fresh)) 'empty home gets a dedicated runtime'
@@ -68,6 +69,7 @@ try {
         Check ((Get-FileHash -LiteralPath $output).Hash.ToLowerInvariant() -eq $fixture.sha256) 'installed output matches legacy fixture'
     }
     $second = Setup @('-HomeDirectory',$fresh,'-DedicatedRuntime','-Offline')
+    Check ($second.selfTest.status -eq 'passed') 'repeat installation reruns launcher self-check'
     Check (-not $second.changed -and $null -eq $second.transaction) 'repeat installation is idempotent'
     $reuse = Join-Path $evidence 'reuse-user'
     $reuseResult = Setup @('-HomeDirectory',$reuse,'-PythonPath',$runtime.python,'-Offline')

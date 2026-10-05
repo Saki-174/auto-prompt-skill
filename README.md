@@ -2,6 +2,8 @@
 
 **目标 Agent＋口语化需求 → 可复制的提示词。** v1.0.2 修复安装恢复问题，并改善严格模式冲突澄清与生成后修订。
 
+2026-10-05 同版本安装修订：修复中文 Python 路径和已有解释器复用，增加实际启动器自检与中文安装摘要。版本号仍为 1.0.2；此前下载过的用户需重新下载最新附件和校验清单，运行安装器，再刷新客户端插件。不能仅凭版本号判断是否已更新。
+
 在 ChatGPT 中使用本技能，为 Codex、ChatGPT、视频生成模型等目标 Agent 整理开发、学习、研究、写作、视频等需求。**运行宿主**执行这个技能；**目标 Agent**接收它生成的提示词，两者可以不同。
 
 [English](README.en.md) · [安装/升级/回滚](docs/install.md) · [ChatGPT 验收清单](docs/chatgpt-acceptance.md) · [发布说明](docs/release-v1.0.2.md)
@@ -10,7 +12,7 @@
 
 1. 安装并登录支持本地技能的 ChatGPT 桌面客户端，使用连接这台电脑的本地执行环境。宿主安装、登录、授权与最终启用由用户完成。
 2. 从 [v1.0.2 Release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2) 下载并解压整合包 **auto-prompt-skill-1.0.2-bundle.zip**，双击 **Install-Windows.cmd**。
-3. 安装器先检查项目专属 Python，再检查兼容的已有解释器。缺少或不兼容时，从 Python 官方下载固定版本 3.13.12 的 Windows x64 嵌入式运行时，验证固定 SHA-256，解压到本项目专属目录；不会更新全局 Python、PATH 或注册表。只有标准库，无 pip/npm/Ollama/Docker 依赖。
+3. 安装器先检查项目专属 Python，再复用仍兼容的已登记解释器或查找其他可用解释器。缺少或不兼容时，从 Python 官方下载固定版本 3.13.12 的 Windows x64 嵌入式运行时，验证固定 SHA-256，解压到本项目专属目录；不会更新全局 Python、PATH 或注册表。安装和重复安装都会实际运行严格启动器并核对固定输出，通过才报告完成。只有标准库，无 pip/npm/Ollama/Docker 依赖。
 4. 按安装器输出，在 ChatGPT 桌面客户端的 Plugins 里选择个人本地来源（通常为 Auto Prompt Local），安装或刷新 Auto Prompt Skill。重启/新建本地聊天后，确认实际加载 v1.0.2。
 
 安装器完成文件安装、项目运行时登记和个人 marketplace 条目更新；**文件安装成功不等于客户端已启用**。如果账号或客户端没有该入口，按实际宿主提供的方式启用，不能把 ZIP 附件视为安装成功。v1.0.2 自动运行时准备限定 Windows x64；其他平台保留 Python 手动安装路径，不宣称已完成所有宿主适配。

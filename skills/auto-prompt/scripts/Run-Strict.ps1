@@ -11,7 +11,7 @@ $OutputEncoding = [Console]::OutputEncoding
 try {
     $receipt = Join-Path $HomeDirectory '.codex\auto-prompt\runtime.json'
     if (-not (Test-Path -LiteralPath $receipt)) { throw 'Runtime registration missing. Run Install-Windows.cmd, or use a compatible host Python with render_prompt.py.' }
-    $runtime = Get-Content -LiteralPath $receipt -Raw | ConvertFrom-Json
+    $runtime = Get-Content -LiteralPath $receipt -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($runtime.schema -ne 1 -or -not (Test-Path -LiteralPath $runtime.python -PathType Leaf)) {
         throw 'Registered Python is unavailable. Rerun Install-Windows.cmd to repair the project runtime.'
     }

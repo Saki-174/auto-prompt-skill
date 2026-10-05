@@ -2,6 +2,8 @@
 
 v1.0.2 improves recovery, strict-mode conflict clarification and prompt revisions. Download the bundle and SHA-256 checksums from the [v1.0.2 release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2).
 
+Same-version installer revision (2026-10-05): Unicode interpreter paths are supported, compatible registered interpreters are reused off PATH, and Windows setup checks the actual strict launcher before reporting success. The CMD entry shows a Chinese summary; the PowerShell entry retains JSON by default. Existing 1.0.2 users must download the refreshed assets/checksums, rerun setup and refresh their host plugin; the version number alone does not identify this revision.
+
 Turn a target agent and a rough request into a usable prompt inside ChatGPT. The **host** runs the skill; the **target agent** receives its generated prompt. Targets may include Codex, ChatGPT or video models, across software, study, research, writing and video tasks.
 
 ## Windows x64 quick start

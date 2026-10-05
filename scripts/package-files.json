@@ -60,6 +60,7 @@
     "skills/auto-prompt/templates/en-development.txt",
     "skills/auto-prompt/templates/en-general.txt",
     "tests/test_install_recovery.py",
+    "tests/test_windows_runtime.py",
     "docs/release-v1.0.2.md"
   ]
 }
