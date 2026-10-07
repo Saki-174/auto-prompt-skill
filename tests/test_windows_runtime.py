@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 import venv
 from pathlib import Path
@@ -115,6 +116,87 @@ class WindowsRuntimeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "self-check failed"):
                 installer.install("plugin", home, self.python, check_launcher=True)
         self.assertEqual(installer.current_state(installer.locations(home, "plugin")), {"target":None,"catalog":None,"runtime":None})
+
+    def wait_file(self, path, process):
+        deadline = time.monotonic() + 20
+        while not path.exists():
+            if process.poll() is not None or time.monotonic() >= deadline:
+                self.fail("runtime lock worker exited or timed out")
+            time.sleep(0.05)
+
+    def test_runtime_preparation_is_serialized_and_rechecks_after_wait(self):
+        folder = self.root / "concurrent"
+        folder.mkdir()
+        script = folder / "worker.ps1"
+        script.write_text(r'''
+param([string]$Package,[string]$HomeDirectory,[string]$PythonPath,[string]$Worker,[string]$Barrier)
+$ErrorActionPreference='Stop'
+. (Join-Path $Package 'scripts\runtime.ps1')
+$original=(Get-Item Function:Get-APPythonUnlocked).ScriptBlock
+function Get-APPythonUnlocked {
+    param([string]$HomeDirectory,[string]$PackageRoot,[string]$PythonPath,[string]$RuntimeArchive,[switch]$DedicatedRuntime,[switch]$Offline)
+    [IO.File]::WriteAllText((Join-Path $Barrier ('entered-'+$Worker)),'entered')
+    if ($Worker -eq 'first') {
+        $deadline=[DateTime]::UtcNow.AddSeconds(20)
+        while (-not (Test-Path (Join-Path $Barrier 'release'))) {
+            if ([DateTime]::UtcNow -gt $deadline) { throw 'Worker barrier timeout' }
+            Start-Sleep -Milliseconds 50
+        }
+    }
+    & $original @PSBoundParameters
+}
+[IO.File]::WriteAllText((Join-Path $Barrier ('started-'+$Worker)),'started')
+$runtime=Get-APPython -HomeDirectory $HomeDirectory -PackageRoot $Package -PythonPath $PythonPath -Offline
+$runtime | ConvertTo-Json -Compress
+''',encoding="utf-8-sig")
+        children=[]
+        try:
+            for worker in ("first","second"):
+                child=subprocess.Popen([str(self.ps),"-NoProfile","-ExecutionPolicy","Bypass","-File",str(script),
+                                        str(ROOT),str(folder/"user"),str(self.python),worker,str(folder)],
+                                       env=self.env,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                children.append(child)
+                self.wait_file(folder/("entered-first" if worker=="first" else "started-second"),child)
+            time.sleep(0.5)
+            self.assertFalse((folder/"entered-second").exists(),"second bootstrap entered while first held the runtime lock")
+            (folder/"release").write_bytes(b"release")
+            for child in children:
+                stdout,stderr=child.communicate(timeout=30)
+                self.assertEqual(child.returncode,0,stderr)
+                self.assertEqual(Path(json.loads(stdout)["python"]),self.python)
+            self.assertTrue((folder/"entered-second").exists())
+            self.assertFalse((folder/"user/.codex/auto-prompt/runtime.prepare.lock").exists())
+        finally:
+            for child in children:
+                if child.poll() is None:
+                    child.kill(); child.communicate(timeout=10)
+
+    def test_runtime_lock_is_released_when_holder_is_terminated(self):
+        folder=self.root/"killed-lock"
+        folder.mkdir()
+        script=folder/"holder.ps1"
+        script.write_text(r'''
+param([string]$Package,[string]$HomeDirectory,[string]$Ready)
+$ErrorActionPreference='Stop'
+. (Join-Path $Package 'scripts\runtime.ps1')
+$guard=Enter-APRuntimeLock $HomeDirectory
+[IO.File]::WriteAllText($Ready,'ready')
+Start-Sleep -Seconds 60
+''',encoding="utf-8-sig")
+        child=subprocess.Popen([str(self.ps),"-NoProfile","-ExecutionPolicy","Bypass","-File",str(script),
+                                str(ROOT),str(folder/"user"),str(folder/"ready")],env=self.env,
+                               stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        try:
+            self.wait_file(folder/"ready",child)
+        finally:
+            if child.poll() is None: child.kill()
+            child.communicate(timeout=10)
+        # No manual lock deletion: the next real installer must acquire it itself.
+        result=subprocess.run([str(self.ps),"-NoProfile","-ExecutionPolicy","Bypass","-File",str(ROOT/"Install-Windows.ps1"),
+                               "-HomeDirectory",str(folder/"user"),"-PythonPath",str(self.python),"-Offline"],
+                              env=self.env,capture_output=True,timeout=60)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(json.loads(result.stdout)["selfTest"]["status"],"passed")
 
 
 if __name__ == "__main__":

@@ -29,7 +29,10 @@ def unique_object(pairs):
 
 
 def load_json(path):
-    return json.loads(path.read_text(encoding="utf-8-sig"), object_pairs_hook=unique_object)
+    try:
+        return json.loads(path.read_text(encoding="utf-8-sig"), object_pairs_hook=unique_object)
+    except (ValueError, UnicodeError) as error:
+        raise ValueError("invalid JSON in " + path.name + "; preserve the file and restore intact JSON before retrying: " + str(error)) from error
 
 
 def encoded(data):
@@ -155,17 +158,23 @@ def managed_baseline(old, mode):
     if not old:
         return {}
     if MANIFEST in old:
-        data = json.loads(old[MANIFEST], object_pairs_hook=unique_object)
-        if data.get("schema") != 1 or data.get("project") != PLUGIN_NAME or not isinstance(data.get("managed"), dict):
-            raise ValueError("unsupported install manifest; destination was not modified")
+        try:
+            data = json.loads(old[MANIFEST], object_pairs_hook=unique_object)
+        except (ValueError, UnicodeError) as error:
+            raise ValueError("invalid install manifest JSON; preserve it and restore an intact ownership manifest before retrying") from error
+        if (not isinstance(data, dict) or type(data.get("schema")) is not int or data["schema"] != 1
+                or data.get("project") != PLUGIN_NAME or not isinstance(data.get("managed"), dict)):
+            raise ValueError("unsupported install manifest; preserve it and restore an intact ownership manifest before retrying; destination was not modified")
         baseline = data["managed"]
     else:
         # v1.0.0 had no ownership manifest. Only its audited file hashes are trusted.
         baseline = load_json(ROOT / "scripts/legacy-v1.0.0.json")["files"]
         if mode == "skill":
             baseline = {str(PurePosixPath(k).relative_to("skills/auto-prompt")): v for k, v in baseline.items() if k.startswith("skills/auto-prompt/")}
-        elif json.loads(old.get("plugin.json", b"{}")).get("name") != PLUGIN_NAME:
-            raise ValueError("destination belongs to another plugin")
+        else:
+            plugin = json.loads(old.get("plugin.json", b"{}"), object_pairs_hook=unique_object)
+            if mode == "plugin" and (not isinstance(plugin, dict) or plugin.get("name") != PLUGIN_NAME):
+                raise ValueError("destination belongs to another plugin or has invalid plugin metadata")
     for key, value in baseline.items():
         relative_name(key)
         if not isinstance(value, str) or not re.fullmatch("[a-f0-9]{64}", value):
@@ -210,23 +219,90 @@ def runtime_data(python_path):
     return encoded({"schema": 1, "python": str(python_path), "version": json.loads(probe.stdout)})
 
 
-def restore_files(home, paths, transaction, before):
+def restore_receipt(transaction, journal):
+    path = transaction / "restore.json"
+    plain_path(path)
+    if not path.exists():
+        return None
+    data = load_json(path)
+    if (not isinstance(data, dict) or data.get("schema") != 1
+            or data.get("phase") not in ("preparing", "ready")
+            or data.get("before") != journal["before"]["target"]
+            or "original" not in data
+            or data["original"] not in (None, journal["after"]["target"])):
+        raise ValueError("unsupported target restoration receipt; recovery stopped")
+    return data
+
+
+def interrupted_restore_gap(transaction, journal, now):
+    if now["target"] is not None or journal["before"]["target"] is None:
+        return False
+    receipt = restore_receipt(transaction, journal)
+    if receipt is None or receipt["phase"] != "ready":
+        return False
+    stage = current_state({"target": transaction / "restore-stage"})["target"]
+    moved = current_state({"target": transaction / "restore-displaced"})["target"]
+    return (stage == receipt["before"] and
+            ((receipt["original"] is not None and moved == receipt["original"])
+             or (receipt["original"] is None and moved is None
+                 and interrupted_target_gap(transaction, journal, now))))
+
+
+def restore_target(home, path, transaction, journal):
+    stage, moved = transaction / "restore-stage", transaction / "restore-displaced"
+    for item in (stage, moved, transaction / "restore.json"):
+        within(home, item)
+    current = current_state({"target": path})["target"]
+    receipt = restore_receipt(transaction, journal)
+    if receipt is None:
+        if stage.exists() or moved.exists():
+            raise ValueError("unregistered restoration directories; recovery stopped")
+        receipt = {"schema": 1, "phase": "preparing", "original": current,
+                   "before": journal["before"]["target"]}
+        write_atomic(transaction / "restore.json", encoded(receipt))
+    # A completed preparation is immutable evidence for the rename gap.
+    if receipt["phase"] == "preparing":
+        if current != receipt["original"] or moved.exists():
+            raise ValueError("target changed during restoration preparation; recovery stopped")
+        if stage.exists():
+            tree_bytes(stage)
+            shutil.rmtree(stage)  # Only this receipt's incomplete private staging copy.
+        if receipt["before"] is not None:
+            shutil.copytree(transaction / "before/target", stage)
+            if current_state({"target": stage})["target"] != receipt["before"]:
+                raise ValueError("restoration staging verification failed")
+        receipt["phase"] = "ready"
+        write_atomic(transaction / "restore.json", encoded(receipt))
+    if receipt["before"] is not None and current_state({"target": stage})["target"] != receipt["before"]:
+        raise ValueError("restoration staging is missing or modified; recovery stopped")
+    current = current_state({"target": path})["target"]
+    if current is None and moved.exists():
+        if not interrupted_restore_gap(transaction, journal, {"target": current}):
+            raise ValueError("restoration rename evidence is missing or modified")
+    else:
+        if current != receipt["original"] or moved.exists():
+            raise ValueError("target changed during restoration; recovery stopped")
+        if path.exists():
+            path.rename(moved)  # Keep the current program until restoration has completed.
+    if receipt["before"] is not None:
+        stage.rename(path)
+
+
+def restore_files(home, paths, transaction, journal):
+    before = journal["before"]
     for key, path in paths.items():
         if path is None:
             continue
         within(home, path)
         if key == "target":
-            if path.exists():
-                tree_bytes(path)  # Verify every descendant before recursive removal.
-                shutil.rmtree(path)
-            if before[key] is not None:
-                shutil.copytree(transaction / "before/target", path)
+            restore_target(home, path, transaction, journal)
         elif before[key] is None:
             if path.exists():
                 path.unlink()
         else:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(transaction / "before" / key, path)
+            write_atomic(path, (transaction / "before" / key).read_bytes())
+        if current_state({key: path})[key] != before[key]:
+            raise ValueError("resource changed during restoration: " + key)
 
 
 def verify_backup(transaction, before):
@@ -252,7 +328,8 @@ def recover_attempt(home, paths, transaction, journal, attempted):
     for key in attempted:
         if now[key] == journal["before"][key]:
             continue
-        if now[key] == journal["after"][key] or (key == "target" and interrupted_target_gap(transaction, journal, now)):
+        if now[key] == journal["after"][key] or (key == "target" and
+                (interrupted_target_gap(transaction, journal, now) or interrupted_restore_gap(transaction, journal, now))):
             safe[key] = paths[key]
         else:
             conflicts.append(key)
@@ -263,7 +340,7 @@ def recover_attempt(home, paths, transaction, journal, attempted):
         if current_state({key: path})[key] != now[key]:
             conflicts.append(key)
             continue
-        restore_files(home, {key: path}, transaction, journal["before"])
+        restore_files(home, {key: path}, transaction, journal)
     if conflicts:
         raise ValueError("recovery preserved later edits to: " + ", ".join(sorted(conflicts)))
 
@@ -368,15 +445,42 @@ def install(mode, home, python_path=None, check_launcher=False):
                     recover_attempt(home, paths, transaction, journal, attempted)
             except Exception as recovery_error:
                 journal["status"] = "recovery_conflict"
-                (transaction / "transaction.json").write_bytes(encoded(journal))
+                write_atomic(transaction / "transaction.json", encoded(journal))
                 raise ValueError("installation failed: " + str(failure) + "; " + str(recovery_error)
                                  + "; transaction " + transaction.name + "; see docs/install.md recovery") from failure
             journal["status"] = "rolled_back"
-            (transaction / "transaction.json").write_bytes(encoded(journal))
+            write_atomic(transaction / "transaction.json", encoded(journal))
             raise
         result.update(transaction=transaction.name, backup=str(transaction / "before/target") if before["target"] is not None else None,
                       catalogBackup=str(transaction / "before/catalog") if before["catalog"] is not None else None)
         return result
+
+
+def validate_journal(journal):
+    message = "unsupported transaction journal; preserve the transaction directory and restore intact evidence before retrying"
+    if (not isinstance(journal, dict) or type(journal.get("schema")) is not int or journal["schema"] != 1
+            or journal.get("status") not in ("committed", "applying", "rolled_back", "recovery_conflict")
+            or journal.get("mode") not in ("plugin", "skill")):
+        raise ValueError(message)
+    for name in ("before", "after"):
+        snapshot = journal.get(name)
+        if not isinstance(snapshot, dict) or set(snapshot) != {"target", "catalog", "runtime"}:
+            raise ValueError(message)
+        for key, value in snapshot.items():
+            if value is None:
+                continue
+            if key == "target":
+                if not isinstance(value, dict):
+                    raise ValueError(message)
+                for file, checksum in value.items():
+                    try:
+                        relative_name(file)
+                    except ValueError as error:
+                        raise ValueError(message) from error
+                    if not isinstance(checksum, str) or not re.fullmatch("[a-f0-9]{64}", checksum):
+                        raise ValueError(message)
+            elif not isinstance(value, str) or not re.fullmatch("[a-f0-9]{64}", value):
+                raise ValueError(message)
 
 
 def rollback(home, transaction_id):
@@ -388,17 +492,19 @@ def rollback(home, transaction_id):
         transaction = home / ".codex/auto-prompt/transactions" / transaction_id
         within(home, transaction)
         journal = load_json(transaction / "transaction.json")
-        if journal.get("schema") != 1 or journal.get("status") not in ("committed", "applying", "rolled_back", "recovery_conflict"):
-            raise ValueError("unsupported transaction journal")
+        validate_journal(journal)
         paths = locations(home, journal["mode"])
         now = current_state(paths)
         if now == journal["before"]:
             return {"rolledBack": True, "changed": False, "transaction": transaction_id}
         if any(now[key] not in (journal["before"][key], journal["after"][key])
-               and not (key == "target" and interrupted_target_gap(transaction, journal, now)) for key in paths):
+               and not (key == "target" and (interrupted_target_gap(transaction, journal, now)
+                                            or interrupted_restore_gap(transaction, journal, now))) for key in paths):
             raise ValueError("files/configuration changed since installation; rollback stopped to preserve later edits")
         verify_backup(transaction, journal["before"])
         recover_attempt(home, paths, transaction, journal, set(paths))
+        if current_state(paths) != journal["before"]:
+            raise ValueError("files/configuration changed during rollback; later edits preserved")
         journal["status"] = "rolled_back"
         write_atomic(transaction / "transaction.json", encoded(journal))
         return {"rolledBack": True, "changed": True, "transaction": transaction_id, "next": "Refresh/reinstall Auto Prompt Skill from its restored source in ChatGPT; client caches are host-managed."}

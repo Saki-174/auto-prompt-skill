@@ -12,6 +12,49 @@ from test_install_release import installer
 
 
 class UpgradeTests(unittest.TestCase):
+    def test_malformed_manifests_report_clear_errors_without_mutation(self):
+        invalid=(b'[]',b'null',b'{',b'{"schema":1,"project":"auto-prompt-skill"}',
+                 b'{"schema":1,"project":"auto-prompt-skill","managed":[]}',
+                 b'{"schema":1,"project":"auto-prompt-skill","managed":{"SKILL.md":7}}')
+        for content in invalid:
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as folder:
+                home=Path(folder)
+                receipt=installer.install("plugin",home)
+                (Path(receipt["path"])/installer.MANIFEST).write_bytes(content)
+                paths=installer.locations(home,"plugin")
+                before=installer.current_state(paths)
+                result=subprocess.run([sys.executable,"-B",installer.__file__,"--home",str(home)],capture_output=True,timeout=30)
+                self.assertEqual(result.returncode,2,result.stderr)
+                self.assertNotIn(b'Traceback',result.stderr)
+                self.assertRegex(result.stderr.decode('utf-8'),r'manifest|managed-file')
+                self.assertEqual(installer.current_state(paths),before)
+
+    def test_malformed_journals_report_clear_errors_without_mutation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            home=Path(folder)
+            receipt=installer.install("plugin",home)
+            paths=installer.locations(home,"plugin")
+            before=installer.current_state(paths)
+            journal_path=home/".codex/auto-prompt/transactions"/receipt["transaction"]/"transaction.json"
+            original=installer.load_json(journal_path)
+            cases=[b'[]',b'null',b'{']
+            for field,value in (("schema",True),("mode",[]),("before",[]),("after",None)):
+                data=copy.deepcopy(original);data[field]=value;cases.append(installer.encoded(data))
+            data=copy.deepcopy(original);del data["before"]["runtime"];cases.append(installer.encoded(data))
+            data=copy.deepcopy(original);data["after"]["target"]=[];cases.append(installer.encoded(data))
+            data=copy.deepcopy(original);data["before"]["catalog"]=12;cases.append(installer.encoded(data))
+            data=copy.deepcopy(original);data["after"]["target"]={"../outside":"a"*64};cases.append(installer.encoded(data))
+            for content in cases:
+                with self.subTest(content=content):
+                    journal_path.write_bytes(content)
+                    result=subprocess.run([sys.executable,"-B",installer.__file__,"--home",str(home),"--rollback",receipt["transaction"]],
+                                          capture_output=True,timeout=30)
+                    self.assertEqual(result.returncode,2,result.stderr)
+                    self.assertNotIn(b'Traceback',result.stderr)
+                    self.assertIn(b'journal' if content not in (b'{',) else b'transaction.json',result.stderr)
+                    self.assertEqual(installer.current_state(paths),before)
+                    self.assertEqual(journal_path.read_bytes(),content)
+
     def test_upgrade_preserves_user_files_catalog_fields_and_rollback(self):
         with tempfile.TemporaryDirectory() as folder:
             home = Path(folder)

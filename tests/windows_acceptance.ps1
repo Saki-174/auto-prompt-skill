@@ -144,6 +144,47 @@ try {
             Check ((Get-FileHash (Join-Path $previousUser '.codex\auto-prompt\runtime.json')).Hash -eq $oldRuntimeHash) "$mode rollback preserves prior runtime registration"
         }
     }
+    # Two real bootstrap processes prepare the same empty dedicated runtime.
+    $parallelHome = Join-Path $evidence 'parallel-user'
+    $workerPath = Join-Path $evidence 'runtime-worker.ps1'
+    $workerSource = @'
+param([string]$PackageRoot,[string]$HomeDirectory,[string]$Archive)
+$ErrorActionPreference='Stop'
+. (Join-Path $PackageRoot 'scripts\runtime.ps1')
+Get-APPython -HomeDirectory $HomeDirectory -PackageRoot $PackageRoot -RuntimeArchive $Archive -DedicatedRuntime -Offline | ConvertTo-Json -Compress
+'@
+    [IO.File]::WriteAllText($workerPath,$workerSource,(New-Object Text.UTF8Encoding($true)))
+    $workers = @()
+    $runtimePaths = @()
+    try {
+        foreach ($number in @(1,2)) {
+            $child = New-Object Diagnostics.Process
+            $child.StartInfo = New-Object Diagnostics.ProcessStartInfo
+            $child.StartInfo.FileName = $ps5
+            $child.StartInfo.Arguments = (@('-NoProfile','-ExecutionPolicy','Bypass','-File',$workerPath,$root,$parallelHome,$archive) | ForEach-Object { '"'+$_+'"' }) -join ' '
+            $child.StartInfo.UseShellExecute = $false
+            $child.StartInfo.CreateNoWindow = $true
+            $child.StartInfo.RedirectStandardOutput = $true
+            $child.StartInfo.RedirectStandardError = $true
+            $child.StartInfo.EnvironmentVariables.Remove('PSModulePath')
+            [void]$child.Start()
+            $workers += @{process=$child; stdout=$child.StandardOutput.ReadToEndAsync(); stderr=$child.StandardError.ReadToEndAsync()}
+        }
+        foreach ($worker in $workers) {
+            if (-not $worker.process.WaitForExit(45000)) { throw 'Concurrent runtime worker timed out' }
+            Check ($worker.process.ExitCode -eq 0) 'concurrent dedicated runtime bootstrap succeeds'
+            $runtimePaths += ($worker.stdout.Result | ConvertFrom-Json).python
+        }
+        Check ($runtimePaths[0] -eq $runtimePaths[1]) 'concurrent workers reuse exactly the same dedicated interpreter'
+        $parallelTarget = Split-Path $runtimePaths[0]
+        Check (@(Get-ChildItem -LiteralPath $parallelTarget -Directory -Recurse | Where-Object Name -match '\.stage-').Count -eq 0) 'runtime contains no nested staging directories'
+        Check (-not (Test-Path (Join-Path $parallelHome '.codex\auto-prompt\runtime.prepare.lock'))) 'runtime preparation lock released after workers finish'
+    } finally {
+        foreach ($worker in $workers) {
+            if (-not $worker.process.HasExited) { $worker.process.Kill(); $worker.process.WaitForExit() }
+            $worker.process.Dispose()
+        }
+    }
     Check ((Get-FileHash -LiteralPath $runtime.python).Hash -eq $runtimeHash) 'reused interpreter not modified'
     $pathAfter = @([Environment]::GetEnvironmentVariable('PATH','User'),[Environment]::GetEnvironmentVariable('PATH','Machine'))
     Check (($pathBefore[0] -ceq $pathAfter[0]) -and ($pathBefore[1] -ceq $pathAfter[1])) 'global user and machine PATH unchanged'

@@ -6,6 +6,8 @@ Same-version installer revision (2026-10-05): Unicode interpreter paths are supp
 
 Turn a target agent and a rough request into a usable prompt inside ChatGPT. The **host** runs the skill; the **target agent** receives its generated prompt. Targets may include Codex, ChatGPT or video models, across software, study, research, writing and video tasks.
 
+Same-version recovery and packaging revision (2026-10-07; version remains 1.0.2): atomic shared-file restoration, verified directory recovery retries, serialized runtime preparation, source symlink/reparse checks before any ZIP is created, and clear errors for malformed ownership manifests and transaction journals. Download the refreshed bundle and checksums and use its installer; the version number alone does not identify the revision. The skill instructions, renderer and templates remain unchanged. Unknown or modified restoration evidence still stops recovery rather than overwriting user work.
+
 ## Windows x64 quick start
 
 Install/sign in to a ChatGPT desktop host that supports local skills. Extract the release bundle and run Install-Windows.cmd. Setup reuses a compatible interpreter or downloads the pinned official Python 3.13.12 embeddable package with SHA-256 verification. It installs only project-owned files; no global Python/PATH changes. Then install/refresh Auto Prompt Skill in the local Plugins source, restart and open a new local chat. Host installation, login, permissions and enablement remain user steps.

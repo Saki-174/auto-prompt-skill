@@ -46,7 +46,39 @@ function Test-APPython([string]$PythonPath) {
     } catch { return $null }
     finally { $process.Dispose() }
 }
+function Enter-APRuntimeLock([string]$HomeDirectory) {
+    $path = Join-Path $HomeDirectory '.codex\auto-prompt\runtime.prepare.lock'
+    Assert-APOwned $HomeDirectory $path
+    [void][IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    while ($true) {
+        try {
+            # The OS releases the handle and removes the lock even on process termination.
+            $handle = [IO.FileStream]::new($path, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite,
+                [IO.FileShare]::None, 4096, [IO.FileOptions]::DeleteOnClose)
+            return $handle
+        } catch [IO.IOException] {
+            if ([DateTime]::UtcNow -ge $deadline) {
+                throw 'Runtime preparation is busy or its lock is unavailable. Wait for the other installer to finish, then retry; do not remove a live lock.'
+            }
+            Start-Sleep -Milliseconds 100
+        }
+    }
+}
 function Get-APPython {
+    param(
+        [string]$HomeDirectory,
+        [string]$PackageRoot,
+        [string]$PythonPath,
+        [string]$RuntimeArchive,
+        [switch]$DedicatedRuntime,
+        [switch]$Offline
+    )
+    $guard = Enter-APRuntimeLock $HomeDirectory
+    try { Get-APPythonUnlocked @PSBoundParameters }
+    finally { $guard.Dispose() }
+}
+function Get-APPythonUnlocked {
     param(
         [string]$HomeDirectory,
         [string]$PackageRoot,
@@ -112,7 +144,7 @@ function Get-APPython {
                 Invoke-WebRequest -UseBasicParsing -Uri $lock.url -OutFile $part -TimeoutSec 120 -MaximumRedirection 0
                 $downloadHash = (Get-FileHash -LiteralPath $part -Algorithm SHA256).Hash.ToLowerInvariant()
                 if ($downloadHash -ne $lock.sha256) { throw 'Downloaded Python checksum does not match the pinned SHA-256.' }
-                Move-Item -LiteralPath $part -Destination $archive
+                [IO.File]::Move($part, $archive)
             } catch {
                 throw "Runtime download failed: $($_.Exception.Message) Retry after fixing connectivity, or use -RuntimeArchive <official-zip>. No install success has been recorded."
             } finally {
@@ -146,11 +178,11 @@ function Get-APPython {
         if (Test-Path -LiteralPath $target) {
             $backup = $target + '.backup-' + [guid]::NewGuid().ToString('N')
             Assert-APOwned $HomeDirectory $backup
-            Move-Item -LiteralPath $target -Destination $backup
+            [IO.Directory]::Move($target, $backup)
         }
-        try { Move-Item -LiteralPath $stage -Destination $target }
+        try { [IO.Directory]::Move($stage, $target) }
         catch {
-            if ($backup) { Move-Item -LiteralPath $backup -Destination $target }
+            if ($backup) { [IO.Directory]::Move($backup, $target) }
             throw
         }
         $probe = Test-APPython (Join-Path $target 'python.exe')

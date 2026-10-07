@@ -1,10 +1,13 @@
 import hashlib
 import importlib.util
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -63,6 +66,52 @@ class InstallerTests(unittest.TestCase):
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_unsafe_source_names_fail_before_any_archive_is_written(self):
+        for entry in ("../outside.md", str(ROOT / "README.md"), "C:/private.md", "./README.md"):
+            with self.subTest(entry=entry), tempfile.TemporaryDirectory() as folder:
+                output = Path(folder) / "release"
+                with patch.object(release,"PUBLIC",release.PUBLIC+[entry]):
+                    with self.assertRaisesRegex(ValueError,"release file name"):
+                        release.build(output)
+                self.assertFalse(output.exists())
+
+    def linked_source(self, kind):
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder)
+            source, external, output = base/"source",base/"external",base/"release"
+            source.mkdir();external.mkdir()
+            (source/"plugin.json").write_text('{"version":"1.0.2"}',encoding="utf-8")
+            (source/"LICENSE").write_bytes(b"license")
+            (source/"NOTICE").write_bytes(b"notice")
+            marker=b"synthetic external text, never real private data"
+            (external/"private.md").write_bytes(marker)
+            linked = source/"references"
+            try:
+                try:
+                    if kind == "junction":
+                        if os.name != "nt": self.skipTest("junction requires Windows")
+                        result=subprocess.run(["cmd.exe","/d","/c","mklink","/J",str(linked),str(external)],capture_output=True)
+                        if result.returncode:self.skipTest("junction creation unavailable")
+                    else:
+                        linked.symlink_to(external,target_is_directory=True)
+                except OSError as error:
+                    self.skipTest("directory symlink creation unavailable: "+str(error))
+                with patch.object(release,"ROOT",source), patch.object(release,"PUBLIC",["plugin.json","references/private.md"]), \
+                        patch.object(release,"SKILL_FILES",[]):
+                    with self.assertRaisesRegex(ValueError,"linked/reparse"):
+                        release.build(output)
+                self.assertFalse(output.exists(),"invalid late source must not create even an earlier archive")
+                self.assertEqual((external/"private.md").read_bytes(),marker)
+            finally:
+                if linked.is_symlink():linked.unlink()
+                elif linked.exists():linked.rmdir()  # Only this junction, never its target.
+
+    def test_directory_symlink_source_is_rejected_before_writing(self):
+        self.linked_source("symlink")
+
+    def test_directory_junction_source_is_rejected_before_writing(self):
+        self.linked_source("junction")
+
     def test_archives_reproduce_and_contain_only_the_public_allowlist(self):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder)
