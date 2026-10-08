@@ -42,7 +42,7 @@ Windows x64 安装器无法复用符合策略的解释器时，准备项目专�
 
 CI 的 `checkout`、`setup-python`、`upload-artifact` 固定为完整提交 SHA，旁边保留对应主版本注释，权限继续为 `contents: read`。本次 SHA 来自对应 `actions/*` 官方仓库的标签解析；这固定执行内容，并不等于对 Action 全部代码的独立审计。依据：[GitHub 安全使用指南](https://docs.github.com/en/actions/reference/security/secure-use)。
 
-更新时先核对官方仓库、发布说明及标签解析的完整 SHA，再改引用和注释，通过对应提交的四组 CI 后分发。`ubuntu-latest`/`windows-latest` 和 Python 分支解析仍会随托管平台变化，本地测试不能代替远端 CI。
+更新时先核对官方仓库、发布说明及标签解析的完整 SHA，再改引用和注释，通过对应提交的四组 CI 后分发。CI 明确使用 Python 3.13.16 和 3.14.8，避免 Runner 复用低于维护门槛的缓存版本；更新补丁策略时同步检查 CI 版本。`ubuntu-latest`/`windows-latest` 仍会随托管平台变化，本地测试不能代替远端 CI。
 
 ## Git 元数据与防误提交
 
