@@ -10,3 +10,10 @@ dist/
 *.pid
 work/
 *backup*
+# Private keys and certificate containers are not release inputs.
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519

@@ -1,8 +1,10 @@
-# Auto Prompt Skill · v1.0.2
+# Auto Prompt Skill · v1.1.0
+
+> v1.1.0 安全性修复版：加强文件、安装事务、输入和运行时保护。变更与升级限制见[发布说明](docs/release-v1.1.0.md)。
 
 在 ChatGPT 中，把“目标 Agent＋口语化需求”整理成可复制的提示词。适合希望把想法说清楚，再交给 Codex、ChatGPT、视频生成模型等工具处理的人；支持开发、学习、研究、写作和视频需求。
 
-[桌面整合包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip) · [网页插件包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-plugin.zip) · [完整安装教程](docs/install.md) · [English](README.en.md)
+[桌面整合包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip) · [网页插件包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip) · [完整安装教程](docs/install.md) · [English](README.en.md)
 
 ## 能做什么
 
@@ -17,14 +19,14 @@
 
 | 使用环境 | 下载文件 | 安装入口 |
 | --- | --- | --- |
-| Windows 电脑浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.0.2-plugin.zip` | 插件页右上角 `＋` → 上传插件 |
-| Windows x64 的 ChatGPT 桌面客户端，本地 Work | `auto-prompt-skill-1.0.2-bundle.zip` | 解压 → `Install-Windows.cmd` → 客户端启用 |
+| Windows 电脑浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.1.0-plugin.zip` | 插件页右上角 `＋` → 上传插件 |
+| Windows x64 的 ChatGPT 桌面客户端，本地 Work | `auto-prompt-skill-1.1.0-bundle.zip` | 解压 → `Install-Windows.cmd` → 客户端启用 |
 
-下载项与 `SHA256SUMS.txt` 均在 [v1.0.2 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2)的 **Assets** 中。详细步骤见[安装教程](docs/install.md)。
+下载项与 `SHA256SUMS.txt` 均在 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)的 **Assets** 中。详细步骤见[安装教程](docs/install.md)。
 
 ### 网页版：上传插件
 
-1. 下载 [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-plugin.zip)，按[教程核对校验值](docs/install.md#1-下载网页插件包)，保持 ZIP，不解压。
+1. 下载 [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip)，按[教程核对校验值](docs/install.md#1-下载网页插件包)，保持 ZIP，不解压。
 2. 在浏览器打开 ChatGPT，点击左侧“插件”，再点击搜索框右侧的 `＋`，选择“上传插件”，选中刚下载的 ZIP。
 3. 看到“导入成功”后点击“查看插件”，在“个人 → 我创建的”找到 **Auto Prompt Skill**；若详情页仍有安装按钮，完成安装。
 4. 新建聊天，输入 `@` 并选择 Auto Prompt 插件或其技能，发送 `请调用 Auto Prompt 技能`，按引导提供目标 Agent 和需求。
@@ -34,11 +36,11 @@
 ### 桌面客户端：本地安装
 
 1. 安装并登录支持本地 Work 和本地插件来源的 ChatGPT **Windows 桌面客户端**。
-2. 下载 [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip)，按[教程核对校验值](docs/install.md#2-下载并核对文件)，解压并双击 `Install-Windows.cmd`。
+2. 下载 [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip)，按[教程核对校验值](docs/install.md#2-下载并核对文件)，解压并双击 `Install-Windows.cmd`。
 3. 看到“严格脚本自检：通过”后，刷新或重启桌面客户端，在插件页切换到安装器打印的本地来源（新建来源通常为 **Auto Prompt Local**／`auto-prompt-local`），安装或刷新 **Auto Prompt Skill**。
 4. 新建连接本机的 Work 聊天，选择技能并发送 `请调用 Auto Prompt 技能`。详细入口辨认、成功标志和找不到来源的处理见[桌面教程](docs/install.md#二windows-桌面客户端本地安装)。
 
-安装器复用兼容 Python 3.9–3.14；找不到时下载并校验固定的 Python 3.13.12 Windows x64 运行时，放入项目专属目录。首次运行时下载约 10.4 MB；不修改全局 Python、PATH 或注册表，也不需要 pip、npm、Ollama、Docker 或常驻服务。
+安装器复用符合[维护策略](docs/security-maintenance.md#运行时维护)的 Python；找不到时下载并校验固定的 Python 3.13.16 Windows x64 运行时，放入项目专属目录。首次运行时下载约 10.9 MB；不修改全局 Python、PATH 或注册表，也不需要 pip、npm、Ollama、Docker 或常驻服务。
 
 安装器自检确认文件和严格启动器可用，客户端启用仍需新聊天验证。本地来源与网页上传是独立安装路径，不会因本地安装而自动出现网页个人条目。账号和客户端必须提供相应入口；其他平台保留[手动兼容路径](docs/install.md#手动兼容路径)，不宣称全部平台已验收。
 
@@ -71,7 +73,9 @@
 
 桌面本地升级使用整合包和同一个安装入口，再刷新客户端插件。这条路径保留独立用户文件；程序文件被修改或与新版路径冲突时，安装器停止并列出问题，不自动覆盖或拼接规则，重复安装不会重复登记。网页个人导入的更新方式和未验证项另见[升级说明](docs/install.md#升级与自定义内容)。
 
-**v1.0.2 有同版本修订，版本号不能单独判断是否更新。** 2026-10-05 修订了解释器复用和安装自检；2026-10-07 修订了恢复、并发运行时准备、打包检查和损坏配置错误。详见[发布说明](docs/release-v1.0.2.md)。
+升级到 **v1.1.0** 请重新下载安装包和校验清单；已有解释器不符合补丁策略时，安装器准备项目专属运行时，不升级共享依赖。详见[v1.1.0 发布说明](docs/release-v1.1.0.md)。
+
+历史 **v1.0.2 有同版本修订，版本号不能单独判断是否更新。** 2026-10-05 修订了解释器复用和安装自检；2026-10-07 修订了恢复、并发运行时准备、打包检查和损坏配置错误。详见[发布说明](docs/release-v1.0.2.md)。
 
 离线安装、指定解释器、目录迁移、事务回滚、卸载及手动兼容方式统一见[安装教程](docs/install.md)。其中离线能力指依赖准备与严格脚本；ChatGPT 对话仍由宿主服务提供。独立用户文件被保留不代表其规则会自动应用，使用时需明确提供或引用。
 
@@ -90,4 +94,4 @@ python scripts/build_release.py
 
 项目主体使用 [ISC 许可证](LICENSE)。需求澄清机制局部改编自 mattpocock/skills 的 grill-me／grilling，保留决策依赖和分轮澄清，限制问题数量，移除上游工具和子代理依赖；固定提交、MIT 许可和改编范围见[来源说明](skills/auto-prompt/references/grill-me-attribution.md)。
 
-可选运行时来自 [Python 官方固定版本](https://www.python.org/downloads/release/python-31312/)，保留原包 `LICENSE.txt`；整合包本身不附带解释器。技能机制参见 [OpenAI skills 文档](https://learn.chatgpt.com/docs/build-skills)。旧服务的迁移范围及共用依赖边界见[迁移说明](docs/migration.md)。
+可选运行时来自 [Python 官方固定版本](https://www.python.org/downloads/release/python-31316/)，保留原包 `LICENSE.txt`；整合包本身不附带解释器。技能机制参见 [OpenAI skills 文档](https://learn.chatgpt.com/docs/build-skills)。旧服务的迁移范围及共用依赖边界见[迁移说明](docs/migration.md)。

@@ -3,13 +3,17 @@
 
 import argparse
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 from string import Template
 
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates"
 FIELDS = {"targetAgent", "rawPrompt", "requirements", "profile", "strictMode", "enableDeepReasoning"}
+MAX_INPUT_BYTES = 1024 * 1024
+MAX_AGENT_UNITS = 256
 
 
 def clean(value):
@@ -44,7 +48,7 @@ def render_prompt(payload):
         raise ValueError("input must be a JSON object")
     unknown = set(payload) - FIELDS
     if unknown:
-        raise ValueError("unknown input fields: " + ", ".join(sorted(unknown)))
+        raise ValueError("unknown input fields are not supported; use the documented schema")
     for name in ("rawPrompt", "requirements", "targetAgent"):
         if name in payload and not isinstance(payload[name], str):
             raise ValueError(name + " must be a string")
@@ -66,6 +70,8 @@ def render_prompt(payload):
         raise ValueError("requirements exceeds 8000 UTF-16 units")
     requirements = clean(explicit)
     agent = payload.get("targetAgent", "")
+    if utf16_length(agent) > MAX_AGENT_UNITS:
+        raise ValueError("targetAgent exceeds 256 UTF-16 units")
     if "\r" in agent or "\n" in agent:
         raise ValueError("targetAgent must be a single line")
     agent = re.sub(r"\s+", " ", clean(agent)) or "待确认"
@@ -81,9 +87,32 @@ def unique_object(pairs):
     result = {}
     for key, value in pairs:
         if key in result:
-            raise ValueError("duplicate JSON key: " + key)
+            raise ValueError("duplicate JSON keys are not supported")
         result[key] = value
     return result
+
+
+def read_input(stream):
+    data = stream.read(MAX_INPUT_BYTES + 1)
+    if len(data) > MAX_INPUT_BYTES:
+        raise ValueError("input JSON exceeds 1048576 bytes")
+    return data.decode("utf-8-sig")
+
+
+def write_output(target, data, input_path=None):
+    # Path spelling alone does not identify a file: hard links share an inode.
+    if input_path is not None:
+        if target.resolve() == input_path.resolve() or (target.exists() and target.samefile(input_path)):
+            raise ValueError("output must not overwrite the input JSON")
+    fd, temporary = tempfile.mkstemp(prefix=".auto-prompt-output-", dir=target.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+        # Replacing the directory entry avoids truncating any existing hard-link peer.
+        os.replace(temporary, target)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 def main(argv=None):
@@ -101,7 +130,11 @@ def main(argv=None):
         if args.input is not None:
             if any(value is not None for value in (args.agent, args.requirements, args.profile)):
                 raise ValueError("put agent, requirements and profile in the JSON when using --input")
-            content = sys.stdin.buffer.read().decode("utf-8-sig") if args.input == "-" else Path(args.input).read_text(encoding="utf-8-sig")
+            if args.input == "-":
+                content = read_input(sys.stdin.buffer)
+            else:
+                with Path(args.input).open("rb") as handle:
+                    content = read_input(handle)
             payload = json.loads(content, object_pairs_hook=unique_object)
         else:
             payload = {"rawPrompt": args.raw_prompt}
@@ -113,13 +146,17 @@ def main(argv=None):
         data = result.encode("utf-8")
         if args.output:
             target = Path(args.output)
-            if args.input not in (None, "-") and target.resolve() == Path(args.input).resolve():
-                raise ValueError("output must not overwrite the input JSON")
-            target.write_bytes(data)
+            write_output(target, data, Path(args.input) if args.input not in (None, "-") else None)
         else:
             sys.stdout.buffer.write(data)
         return 0
-    except (ValueError, OSError, UnicodeError) as error:
+    except RecursionError:
+        print("Auto Prompt: input JSON exceeds supported nesting depth", file=sys.stderr)
+        return 2
+    except UnicodeError:
+        print("Auto Prompt: input must contain valid UTF-8 text", file=sys.stderr)
+        return 2
+    except (ValueError, OSError) as error:
         # Do not echo raw user content on validation errors.
         print("Auto Prompt: " + str(error), file=sys.stderr)
         return 2

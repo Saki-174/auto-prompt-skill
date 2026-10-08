@@ -15,8 +15,7 @@ try {
     if ($runtime.schema -ne 1 -or -not (Test-Path -LiteralPath $runtime.python -PathType Leaf)) {
         throw 'Registered Python is unavailable. Rerun Install-Windows.cmd to repair the project runtime.'
     }
-    $probe = 'import sys,json,hashlib; assert (3,9)<=sys.version_info[:2]<(3,15)'
-    & $runtime.python -I -c $probe
+    $probe = & $runtime.python -I (Join-Path $PSScriptRoot 'runtime_policy.py')
     if ($LASTEXITCODE -ne 0) { throw 'Registered Python is incompatible. Rerun Install-Windows.cmd.' }
     $arguments = @('-I', (Join-Path $PSScriptRoot 'render_prompt.py'), '--input', $InputPath, '--format', $Format)
     if ($OutputPath) { $arguments += @('--output', $OutputPath) }

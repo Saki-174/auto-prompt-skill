@@ -23,7 +23,7 @@ def unique_object(pairs):
     data = {}
     for key, value in pairs:
         if key in data:
-            raise ValueError("duplicate JSON key: " + key)
+            raise ValueError("duplicate JSON keys are not supported")
         data[key] = value
     return data
 
@@ -211,12 +211,11 @@ def catalog_update(path, home, target):
 
 def runtime_data(python_path):
     python_path = Path(python_path).absolute()
-    probe = subprocess.run([str(python_path), "-I", "-c",
-                            "import sys,json,hashlib,zipfile,subprocess; assert (3,9)<=sys.version_info[:2]<(3,15); print(json.dumps(list(sys.version_info[:3])))"],
+    probe = subprocess.run([str(python_path), "-I", str(ROOT / "skills/auto-prompt/scripts/runtime_policy.py")],
                            capture_output=True, timeout=20)
     if probe.returncode:
         raise ValueError("selected Python is incompatible; run Install-Windows.cmd to prepare a dedicated runtime")
-    return encoded({"schema": 1, "python": str(python_path), "version": json.loads(probe.stdout)})
+    return encoded({"schema": 1, "python": str(python_path), "version": json.loads(probe.stdout)["version"]})
 
 
 def restore_receipt(transaction, journal):
@@ -418,11 +417,24 @@ def install(mode, home, python_path=None, check_launcher=False):
         if current_state(paths) != before:
             raise ValueError("installation changed during preparation; retry after closing other installers")
         attempted = set()
+        switch_conflict = False
         try:
             paths["target"].parent.mkdir(parents=True, exist_ok=True)
             if paths["target"].exists():
                 paths["target"].rename(transaction / "displaced")
                 attempted.add("target")
+                # Recheck the actual moved tree, closing the final pre-rename check window.
+                try:
+                    moved_matches = hashes(tree_bytes(transaction / "displaced")) == before["target"]
+                except (OSError, ValueError):
+                    moved_matches = False
+                if not moved_matches:
+                    switch_conflict = True
+                    if not paths["target"].exists():
+                        (transaction / "displaced").rename(paths["target"])
+                        attempted.discard("target")
+                    raise ValueError("installation directory changed during switch; latest edits preserved; transaction "
+                                     + transaction.name + "; close editors and retry; see docs/install.md recovery")
             stage.rename(paths["target"])
             attempted.add("target")
             for key in ("catalog", "runtime"):
@@ -448,7 +460,7 @@ def install(mode, home, python_path=None, check_launcher=False):
                 write_atomic(transaction / "transaction.json", encoded(journal))
                 raise ValueError("installation failed: " + str(failure) + "; " + str(recovery_error)
                                  + "; transaction " + transaction.name + "; see docs/install.md recovery") from failure
-            journal["status"] = "rolled_back"
+            journal["status"] = "recovery_conflict" if switch_conflict else "rolled_back"
             write_atomic(transaction / "transaction.json", encoded(journal))
             raise
         result.update(transaction=transaction.name, backup=str(transaction / "before/target") if before["target"] is not None else None,

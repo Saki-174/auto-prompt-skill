@@ -1,4 +1,6 @@
-# 安装与使用 · v1.0.2
+# 安装与使用 · v1.1.0
+
+> v1.1.0 安全性修复版：加强文件、安装事务、输入和运行时保护。变更与升级限制见[发布说明](release-v1.1.0.md)。
 
 最新步骤以[GitHub 安装教程](https://github.com/Saki-174/auto-prompt-skill/blob/main/docs/install.md)为准；现有 Release 整合包内的文档可能早于本次更新。
 
@@ -10,12 +12,12 @@
 
 | 你要在哪里使用 | 应下载的文件 | 接下来做什么 |
 | --- | --- | --- |
-| 浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.0.2-plugin.zip` | 保持压缩状态，在网页插件页“上传插件” |
-| ChatGPT Windows x64 桌面客户端的本地 Work | `auto-prompt-skill-1.0.2-bundle.zip` | 解压，运行 Windows 安装器，再在客户端启用 |
+| 浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.1.0-plugin.zip` | 保持压缩状态，在网页插件页“上传插件” |
+| ChatGPT Windows x64 桌面客户端的本地 Work | `auto-prompt-skill-1.1.0-bundle.zip` | 解压，运行 Windows 安装器，再在客户端启用 |
 
-另有 `auto-prompt-1.0.2-skill.zip`，用于已有单技能导入／发现方式的宿主；本教程的网页“上传插件”和桌面安装器路径均使用上表文件。GitHub 的 **Source code** 压缩包也不是这两条路径的推荐下载项。
+另有 `auto-prompt-1.1.0-skill.zip`，用于已有单技能导入／发现方式的宿主；本教程的网页“上传插件”和桌面安装器路径均使用上表文件。GitHub 的 **Source code** 压缩包也不是这两条路径的推荐下载项。
 
-所有文件均在 [v1.0.2 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2)的 **Assets** 中，校验清单是 [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/SHA256SUMS.txt)。两条路径都需要可登录的 ChatGPT 账号和相应插件入口，账号或工作区政策可能限制可见功能。
+所有文件均在 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)的 **Assets** 中，校验清单是 [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/SHA256SUMS.txt)。两条路径都需要可登录的 ChatGPT 账号和相应插件入口，账号或工作区政策可能限制可见功能。
 
 ## 一、Windows 电脑浏览器：网页版安装
 
@@ -23,12 +25,12 @@
 
 ### 1. 下载网页插件包
 
-1. 在 Windows 浏览器打开 [v1.0.2 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2)。
-2. 展开 **Assets**，下载 [auto-prompt-skill-1.0.2-plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-plugin.zip) 和 `SHA256SUMS.txt` 到同一下载文件夹。
+1. 在 Windows 浏览器打开 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)。
+2. 展开 **Assets**，下载 [auto-prompt-skill-1.1.0-plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip) 和 `SHA256SUMS.txt` 到同一下载文件夹。
 3. 在该文件夹打开 PowerShell，用以下只读命令核对文件：
 
 ~~~powershell
-Get-FileHash -LiteralPath '.\auto-prompt-skill-1.0.2-plugin.zip' -Algorithm SHA256
+Get-FileHash -LiteralPath '.\auto-prompt-skill-1.1.0-plugin.zip' -Algorithm SHA256
 Get-Content -LiteralPath '.\SHA256SUMS.txt'
 ~~~
 
@@ -47,7 +49,7 @@ Get-Content -LiteralPath '.\SHA256SUMS.txt'
 
 ### 3. 选择 ZIP，确认导入结果
 
-1. 在文件选择框中选中刚下载的 `auto-prompt-skill-1.0.2-plugin.zip`。
+1. 在文件选择框中选中刚下载的 `auto-prompt-skill-1.1.0-plugin.zip`。
 2. 等待校验。检查“新插件”窗口是否显示所选文件名，以及绿色 **“导入成功”** 提示；出现错误时先处理错误，不继续安装。
 3. 点击右下角 **“查看插件”**。
 4. 在插件页切换到 **“个人”**，在 **“我创建的”** 中找到 **Auto Prompt Skill**，打开详情。
@@ -105,23 +107,23 @@ Get-Content -LiteralPath '.\SHA256SUMS.txt'
 
 入口受账号、客户端及工作区设置影响。没有入口时，先确认宿主支持情况，不要把 ZIP 上传到聊天当作安装。官方依据：[本地插件目录](https://developers.openai.com/plugins/build/plugins)、[ChatGPT 本地 Work](https://learn.chatgpt.com/docs/use-chatgpt)。
 
-无需提前安装 Python。安装器会复用兼容的 Python 3.9–3.14；找不到时，从 Python 官方下载固定的 3.13.12 Windows x64 嵌入式运行时，校验后放入项目专属目录。首次下载约 10.4 MB，需要联网；有兼容解释器或已校验的官方 ZIP 时可[离线安装](#离线与显式运行时)。
+无需提前安装 Python。安装器会复用符合[维护策略](security-maintenance.md#运行时维护)的 Python；找不到时，从 Python 官方下载固定的 3.13.16 Windows x64 嵌入式运行时，校验后放入项目专属目录。首次下载约 10.9 MB，需要联网；有兼容解释器或已校验的官方 ZIP 时可[离线安装](#离线与显式运行时)。
 
 自动依赖准备仅限 Windows x64。其他平台保留[手动兼容路径](#手动兼容路径)，不等于已完成其他宿主或平台的客户端验收。本地安装不会自动同步到网页、移动端或云端；严格脚本能离线运行，ChatGPT 对话仍由宿主服务提供。
 
 ### 2. 下载并核对文件
 
-打开 [v1.0.2 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2)，展开 **Assets**，下载这两个文件到同一文件夹：
+打开 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)，展开 **Assets**，下载这两个文件到同一文件夹：
 
-- [auto-prompt-skill-1.0.2-bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip)：含安装器、技能、脚本及文档。
-- [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/SHA256SUMS.txt)：三个 ZIP 的校验清单。
+- [auto-prompt-skill-1.1.0-bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip)：含安装器、技能、脚本及文档。
+- [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/SHA256SUMS.txt)：三个 ZIP 的校验清单。
 
 **桌面本地安装使用整合包。** 上面的网页路径使用 `plugin.zip`；`skill.zip` 用于已有单技能导入方式。它们不含本地安装器；GitHub 的 **Source code** 压缩包也不是推荐下载项。
 
 在下载文件夹打开 PowerShell，运行以下只读命令：
 
 ~~~powershell
-Get-FileHash -LiteralPath '.\auto-prompt-skill-1.0.2-bundle.zip' -Algorithm SHA256
+Get-FileHash -LiteralPath '.\auto-prompt-skill-1.1.0-bundle.zip' -Algorithm SHA256
 Get-Content -LiteralPath '.\SHA256SUMS.txt'
 ~~~
 
@@ -168,7 +170,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 请调用 Auto Prompt 技能。
 ~~~
 
-预期进入简短引导，而不是空模板。需要确认加载情况时，让它报告实际读取的 `SKILL.md` 路径和插件版本，应为 v1.0.2；完整检查见[新对话验收清单](chatgpt-acceptance.md)。
+预期进入简短引导，而不是空模板。需要确认加载情况时，让它报告实际读取的 `SKILL.md` 路径和插件版本，应为 v1.1.0；完整检查见[新对话验收清单](chatgpt-acceptance.md)。
 
 **安装器自检通过不代表客户端已经启用。** 同版本修订还需按[升级步骤](#升级与自定义内容)重新下载、安装和刷新，不能只看版本号或旧聊天的说法。
 
@@ -196,9 +198,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 
 ### 桌面本地更新
 
-**v1.0.2 有同版本修订。** 已安装 1.0.2 的用户也需重新下载整合包和 `SHA256SUMS.txt`，核对校验值，运行 `Install-Windows.cmd` 并刷新客户端；程序文件归属按内容摘要判断，不只比较版本号。
+**升级到 v1.1.0：** 重新下载上面的整合包及校验清单，校验后运行安装器，再刷新客户端插件。升级前关闭相关编辑器；安装器保留独立自定义文件，已修改的程序文件仍会报告冲突。已登记的旧 Python 不符合[补丁策略](security-maintenance.md#运行时维护)时，安装器自动准备专属 Python 3.13.16；离线升级必须提供新版校验 ZIP 或兼容解释器，不能使用旧运行时 ZIP。详见[v1.1.0 发布说明](release-v1.1.0.md)。
 
-若客户端仍使用旧缓存，应通过客户端支持的本插件刷新/重装入口重新加载，不删除整个插件缓存。[发布说明](release-v1.0.2.md)记录修订来源；旧提交仍可用其完整提交号检出。
+**历史 v1.0.2 有同版本修订。** 已安装 1.0.2 的用户也需重新下载整合包和 `SHA256SUMS.txt`，核对校验值，运行 `Install-Windows.cmd` 并刷新客户端；程序文件归属按内容摘要判断，不只比较版本号。
+
+若客户端仍使用旧缓存，应通过客户端支持的本插件刷新/重装入口重新加载，不删除整个插件缓存。[发布说明](release-v1.0.2.md)记录修订来源；重写前旧提交需按[历史映射](history-rewrite.md)定位当前对象，不保证旧 SHA 可在新克隆检出。
 
 关闭正在使用旧技能的聊天后，解压新包，运行同一入口。程序更新和用户配置分开处理：
 
@@ -224,12 +228,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 .\Install-Windows.ps1 -DedicatedRuntime
 
 # 在联网电脑取得官方文件后，复制到新电脑离线使用
-.\Install-Windows.ps1 -DedicatedRuntime -Offline -RuntimeArchive 'C:\downloads\python-3.13.12-embed-amd64.zip'
+.\Install-Windows.ps1 -DedicatedRuntime -Offline -RuntimeArchive 'C:\downloads\python-3.13.16-embed-amd64.zip'
 ~~~
 
 固定 URL 和完整 SHA-256 记录在 [scripts/runtime-lock.json](../scripts/runtime-lock.json)；预先提供的 ZIP 仍必须校验。可从 Python 官方版本页下载相同文件，不修改 lock 来绕过校验。已兼容的运行时优先复用，`-RuntimeArchive` 仅在需要准备运行时时读取。
 
-官方 ZIP 来自 [Python 3.13.12 发布页](https://www.python.org/downloads/release/python-31312/)的 **Windows embeddable package (64-bit)**，不是普通安装器；文件名为 `python-3.13.12-embed-amd64.zip`。大小、联网和许可方案比较见[依赖设计说明](v1.0.1-design.md)。
+官方 ZIP 来自 [Python 3.13.16 发布页](https://www.python.org/downloads/release/python-31316/)的 **Windows embeddable package (64-bit)**，不是普通安装器；文件名为 `python-3.13.16-embed-amd64.zip`。大小、联网和许可方案比较见[依赖设计说明](v1.0.1-design.md)。
 
 ## 失败与回滚
 
@@ -240,6 +244,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 ### 恢复过程的保护措施
 
 2026-10-07 恢复修订：共享登记和运行时指针以原子替换恢复，避免复制中断留下半份 JSON。
+
+v1.1.0 安全修订在旧目录移入 `displaced` 后再次检查内容；并发编辑或无法读取时恢复最新目录（活动位置仍空缺时），停止安装并报告事务 ID。若活动位置已有其他内容则保留双方证据，不强行覆盖。检查相关目录、关闭编辑器后重试，不对冲突事务强制回滚；详见[保护范围](security-maintenance.md#输入与文件保护)。
 
 目录恢复先在事务专属 `restore-stage` 中复制并校验旧文件；复制失败时当前程序目录仍保留。`restore.json` 记录准备阶段和摘要，切换时将当前目录保留在 `restore-displaced`。
 
@@ -280,7 +286,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 ### 网页路径
 
 - 找不到“上传插件”：入口受账号、工作区和功能权限影响，不能凭公共插件页推断具备导入权限。
-- 选了错误文件：网页入口使用 `auto-prompt-skill-1.0.2-plugin.zip`，保持 ZIP。单技能包缺少插件清单，桌面整合包包含额外安装材料；按推荐文件重新选择。
+- 选了错误文件：网页入口使用 `auto-prompt-skill-1.1.0-plugin.zip`，保持 ZIP。单技能包缺少插件清单，桌面整合包包含额外安装材料；按推荐文件重新选择。
 - 导入后找不到：确认登录同一账号／工作区，切换到“个人 → 我创建的”，打开条目检查安装状态，再新建聊天用 `@` 搜索。
 - 上传出现格式或规则错误：保留错误全文或截图，先核对校验值与文件名；包结构和账号检查通过后再处理具体问题，不凭“上传入口可见”宣称导入一定成功。
 - 能生成提示词但严格模式无法运行：灵活改写使用当前模型；严格模式还需脚本执行工具，网页版这部分未验收。明确记录未运行，不把模型结果当作严格输出。
@@ -321,7 +327,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 - 程序来源：`.codex/plugins/local-auto-prompt-skill/`
 - 目录登记：`.agents/plugins/marketplace.json`，仅本项目条目
 - 运行时指针：`.codex/auto-prompt/runtime.json`
-- 可选下载运行时：`.codex/auto-prompt/runtimes/python-3.13.12-x64/`
+- 可选下载运行时：`.codex/auto-prompt/runtimes/python-3.13.16-x64/`
 - 官方 ZIP 缓存：`.codex/auto-prompt/downloads/`
 - 事务备份：`.codex/auto-prompt/transactions/<ID>/`
 
@@ -345,7 +351,7 @@ CMD 仅在自身子进程中重建 Windows PowerShell 模块搜索环境，避�
 
 ## 手动兼容路径
 
-已有 Python 3.9–3.14 时，在仓库根目录或整合包解压文件夹运行。以下为两种替代方式，选一种；不会自动下载解释器。
+已有符合[维护策略](security-maintenance.md#运行时维护)的 Python 时，在仓库根目录或整合包解压文件夹运行。以下为两种替代方式，选一种；不会自动下载解释器。
 
 登记插件来源：
 

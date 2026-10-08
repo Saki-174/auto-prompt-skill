@@ -9,6 +9,7 @@
     "skills/auto-prompt/references/grill-me-attribution.md",
     "skills/auto-prompt/scripts/render_prompt.py",
     "skills/auto-prompt/scripts/Run-Strict.ps1",
+    "skills/auto-prompt/scripts/runtime_policy.py",
     "skills/auto-prompt/templates/zh-development.txt",
     "skills/auto-prompt/templates/zh-general.txt",
     "skills/auto-prompt/templates/en-development.txt",
@@ -55,12 +56,17 @@
     "skills/auto-prompt/references/grill-me-attribution.md",
     "skills/auto-prompt/scripts/render_prompt.py",
     "skills/auto-prompt/scripts/Run-Strict.ps1",
+    "skills/auto-prompt/scripts/runtime_policy.py",
     "skills/auto-prompt/templates/zh-development.txt",
     "skills/auto-prompt/templates/zh-general.txt",
     "skills/auto-prompt/templates/en-development.txt",
     "skills/auto-prompt/templates/en-general.txt",
     "tests/test_install_recovery.py",
     "tests/test_windows_runtime.py",
-    "docs/release-v1.0.2.md"
+    "docs/release-v1.0.2.md",
+    "tests/test_security_regressions.py",
+    "docs/security-maintenance.md",
+    "docs/history-rewrite.md",
+    "docs/release-v1.1.0.md"
   ]
 }

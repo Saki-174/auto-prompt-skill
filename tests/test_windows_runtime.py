@@ -1,12 +1,16 @@
 """Exercise the actual Windows bootstrapper and launcher without downloading Python."""
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
-import venv
+try:
+    import venv
+except ModuleNotFoundError:
+    venv = None
 from pathlib import Path
 from unittest.mock import patch
 from test_install_release import ROOT, installer
@@ -49,8 +53,15 @@ class WindowsRuntimeTests(unittest.TestCase):
         cls.env["PATH"] = str(cls.ps.parent) + os.pathsep + str(Path(os.environ["SystemRoot"]) / "System32")
         # A real interpreter with a non-ASCII path, deliberately absent from PATH.
         runtime = cls.root / "中文 Python"
-        venv.EnvBuilder(with_pip=False).create(runtime)
-        cls.python = runtime / "Scripts/python.exe"
+        if venv is not None:
+            venv.EnvBuilder(with_pip=False).create(runtime)
+            cls.python = runtime / "Scripts/python.exe"
+        elif list(Path(sys.executable).parent.glob("python*._pth")):
+            # Official embeddable distributions omit venv. Copy that isolated runtime.
+            shutil.copytree(Path(sys.executable).parent, runtime)
+            cls.python = runtime / "python.exe"
+        else:
+            raise RuntimeError("Windows runtime tests need venv or an official embeddable runtime")
 
     @classmethod
     def tearDownClass(cls):

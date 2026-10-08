@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "version": "3.13.12",
+  "version": "3.13.16",
   "platform": "windows-x64",
-  "filename": "python-3.13.12-embed-amd64.zip",
-  "url": "https://www.python.org/ftp/python/3.13.12/python-3.13.12-embed-amd64.zip",
-  "sha256": "76f238f606250c87c6beac75dccd35ee99070a13490555936abb6cb64ecce3d0",
-  "source": "https://www.python.org/downloads/release/python-31312/",
+  "filename": "python-3.13.16-embed-amd64.zip",
+  "url": "https://www.python.org/ftp/python/3.13.16/python-3.13.16-embed-amd64.zip",
+  "sha256": "97dae5274cc54867065e8d5a3226e48c35017ed332a0fdb0e27d5b5821961297",
+  "source": "https://www.python.org/downloads/release/python-31316/",
   "license": "Python Software Foundation License Version 2; preserve archive LICENSE.txt and bundled notices"
 }

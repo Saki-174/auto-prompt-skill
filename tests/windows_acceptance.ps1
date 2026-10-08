@@ -8,6 +8,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$runtimeLock = Get-Content -LiteralPath (Join-Path $root 'scripts/runtime-lock.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $expectedVersion = (Get-Content (Join-Path $root 'plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
 $evidence = Join-Path ([IO.Path]::GetFullPath($OutputDirectory)) ('run-' + [guid]::NewGuid().ToString('N'))
 [void][IO.Directory]::CreateDirectory($evidence)
@@ -55,7 +56,7 @@ try {
     $runtimeFile = Join-Path $fresh '.codex\auto-prompt\runtime.json'
     $runtime = Get-Content -LiteralPath $runtimeFile -Raw -Encoding UTF8 | ConvertFrom-Json
     Check ($runtime.python.StartsWith($fresh)) 'empty home gets a dedicated runtime'
-    Check (($runtime.version -join '.') -eq '3.13.12') 'fixed Python version'
+    Check (($runtime.version -join '.') -eq $runtimeLock.version) 'fixed Python version'
     Check (Test-Path (Join-Path (Split-Path $runtime.python) 'LICENSE.txt')) 'upstream runtime license retained'
     $runtimeHash = (Get-FileHash -LiteralPath $runtime.python).Hash
     $fixture = (Get-Content -LiteralPath (Join-Path $root 'tests\fixtures\legacy.json') -Raw -Encoding UTF8 | ConvertFrom-Json).cases[0]
@@ -76,7 +77,7 @@ try {
     $reuseRuntime = Get-Content (Join-Path $reuse '.codex\auto-prompt\runtime.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     Check ($reuseRuntime.python -eq $runtime.python) 'compatible runtime reused'
     Check (-not (Test-Path (Join-Path $reuse '.codex\auto-prompt\runtimes'))) 'no redundant runtime prepared'
-    $archive = if ($RuntimeArchive) { [IO.Path]::GetFullPath($RuntimeArchive) } else { Join-Path $fresh '.codex\auto-prompt\downloads\python-3.13.12-embed-amd64.zip' }
+    $archive = if ($RuntimeArchive) { [IO.Path]::GetFullPath($RuntimeArchive) } else { Join-Path $fresh ('.codex\auto-prompt\downloads\' + $runtimeLock.filename) }
     $incompatible = Join-Path $evidence 'incompatible-user'
     # A known executable unable to satisfy the Python probe exercises the rejection branch.
     $badResult = Setup @('-HomeDirectory',$incompatible,'-PythonPath',$ps5,'-Offline','-RuntimeArchive',$archive)

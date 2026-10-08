@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "auto-prompt-skill",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Turn rough requests into prompts in ChatGPT, with guided clarification and optional offline deterministic rendering.",
   "author": {
     "name": "Saki-174",

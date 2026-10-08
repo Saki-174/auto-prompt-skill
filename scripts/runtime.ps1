@@ -23,13 +23,13 @@ function Assert-APOwned([string]$HomeDirectory, [string]$Path) {
     }
     Assert-APPlainPath $full
 }
-function Test-APPython([string]$PythonPath) {
+function Test-APPython([string]$PythonPath, [string]$PolicyPath) {
     if (-not $PythonPath -or -not (Test-Path -LiteralPath $PythonPath -PathType Leaf)) { return $null }
     if ([IO.Path]::GetExtension($PythonPath) -ne '.exe') { return $null }
     $process = New-Object Diagnostics.Process
     $process.StartInfo = New-Object Diagnostics.ProcessStartInfo
     $process.StartInfo.FileName = $PythonPath
-    $process.StartInfo.Arguments = '-I -c "import sys,json,hashlib,zipfile,subprocess; assert (3,9)<=sys.version_info[:2]<(3,15); print(json.dumps(dict(python=sys.executable,version=list(sys.version_info[:3]))))"'
+    $process.StartInfo.Arguments = '-I "' + $PolicyPath + '"'
     $process.StartInfo.UseShellExecute = $false
     $process.StartInfo.CreateNoWindow = $true
     $process.StartInfo.RedirectStandardOutput = $true
@@ -92,13 +92,14 @@ function Get-APPythonUnlocked {
     $architecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
     if ($architecture -ne 'AMD64') { throw "Automatic runtime preparation has not been validated on $architecture." }
     $lock = Get-Content -LiteralPath (Join-Path $PackageRoot 'scripts\runtime-lock.json') -Raw | ConvertFrom-Json
+    $policy = Join-Path $PackageRoot 'skills\auto-prompt\scripts\runtime_policy.py'
     if ($lock.platform -ne 'windows-x64' -or $lock.url -notmatch '^https://www\.python\.org/ftp/python/' -or $lock.sha256 -notmatch '^[a-f0-9]{64}$') {
         throw 'Invalid runtime lock. Obtain an intact candidate package.'
     }
     $state = Join-Path $HomeDirectory '.codex\auto-prompt'
     $target = Join-Path $state ("runtimes\python-" + $lock.version + "-x64")
     Assert-APOwned $HomeDirectory $target
-    $probe = Test-APPython (Join-Path $target 'python.exe')
+    $probe = Test-APPython (Join-Path $target 'python.exe') $policy
     if ($probe -and ($probe.version -join '.') -eq $lock.version) { return $probe }
     if (-not $DedicatedRuntime) {
         $candidates = @()
@@ -125,7 +126,7 @@ function Get-APPythonUnlocked {
             }
         }
         foreach ($candidate in $candidates) {
-            $probe = Test-APPython $candidate
+            $probe = Test-APPython $candidate $policy
             if ($probe) { return $probe }
         }
     }
@@ -170,7 +171,7 @@ function Get-APPythonUnlocked {
             }
         } finally { $zip.Dispose() }
         [IO.Compression.ZipFile]::ExtractToDirectory($archive, $stage)
-        $probe = Test-APPython (Join-Path $stage 'python.exe')
+        $probe = Test-APPython (Join-Path $stage 'python.exe') $policy
         if (-not $probe -or ($probe.version -join '.') -ne $lock.version -or -not (Test-Path -LiteralPath (Join-Path $stage 'LICENSE.txt'))) {
             throw 'Extracted runtime validation failed; existing runtime retained.'
         }
@@ -185,7 +186,7 @@ function Get-APPythonUnlocked {
             if ($backup) { [IO.Directory]::Move($backup, $target) }
             throw
         }
-        $probe = Test-APPython (Join-Path $target 'python.exe')
+        $probe = Test-APPython (Join-Path $target 'python.exe') $policy
         if (-not $probe) { throw 'Runtime failed its final probe. Rerun installation; retained runtime backups are under runtimes/.' }
         return $probe
     } finally {
