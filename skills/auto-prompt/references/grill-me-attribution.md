@@ -1,6 +1,6 @@
 # 澄清机制来源
 
-核验日期：2026-10-04。用户指定仓库：mattpocock/skills。
+核验日期：2026-10-04。来源仓库：mattpocock/skills。
 固定提交：`24fe0ef7737efae15c87225755e9f6f5965e4888`。
 
 - [grill-me 入口](https://github.com/mattpocock/skills/blob/24fe0ef7737efae15c87225755e9f6f5965e4888/skills/productivity/grill-me/SKILL.md) 当前仅委托给 grilling。
