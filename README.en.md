@@ -2,7 +2,7 @@
 
 Turn a target agent and a rough request into a copyable prompt inside ChatGPT. For people who want to clarify an idea before handing it to Codex, ChatGPT or a video model. Covers software, study, research, writing and video tasks.
 
-[Download the Windows bundle](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip) · [Installation guide (Chinese)](docs/install.md) · [中文](README.md)
+[Desktop bundle](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip) · [Web plugin ZIP](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-plugin.zip) · [Installation guide (Chinese)](docs/install.md) · [中文](README.md)
 
 ## What it does
 
@@ -11,20 +11,36 @@ Turn a target agent and a rough request into a copyable prompt inside ChatGPT. F
 - **Revises prompts** through append, replace and undo requests, or starts a new task.
 - **Offers two modes**: flexible model rewriting by default, or an explicitly chosen offline strict renderer.
 
-The skill generates prompts; it does not execute their tasks. The **host** is the ChatGPT environment running the skill. The **target agent** is the tool receiving the generated prompt. They may differ.
+The skill generates prompts; it does not execute their tasks. The **host** is the ChatGPT web or desktop environment running the skill. The **target agent** is the tool receiving the generated prompt. They may differ.
 
-## Quick start: Windows x64
+## Installation: choose your ChatGPT environment
 
-Install and sign in to a ChatGPT desktop client with local Work and local plugin support. Availability depends on your account, client and workspace settings; installing files cannot supply a missing host feature. See [OpenAI's local plugin guidance](https://developers.openai.com/plugins/build/plugins).
+| Environment | Download | Entry point |
+| --- | --- | --- |
+| ChatGPT in a browser on Windows | `auto-prompt-skill-1.0.2-plugin.zip` | Plugins → top-right `+` → Upload plugin |
+| ChatGPT Windows x64 desktop app, local Work | `auto-prompt-skill-1.0.2-bundle.zip` | Extract → `Install-Windows.cmd` → enable in the client |
 
-1. **Download and extract.** Open the [v1.0.2 release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2). Under **Assets**, download `auto-prompt-skill-1.0.2-bundle.zip` and `SHA256SUMS.txt`. [Verify the checksum](docs/install.md#2-下载并核对文件), extract the ZIP, and open the folder containing `Install-Windows.cmd`. New users need the bundle, without separate plugin or skill ZIPs.
-2. **Run setup.** Double-click `Install-Windows.cmd`. Success shows a Chinese completion or unchanged-files message and `严格脚本自检：通过` (strict launcher self-test passed). Keep the recovery transaction ID when changes are made.
-3. **Enable the plugin.** Refresh or restart ChatGPT. In **Plugins**, select the local source printed by setup and install or refresh **Auto Prompt Skill**. Complete permissions and enablement in the client.
-4. **Try it in a new chat.** Open a Work chat connected to this computer and send `Please invoke the Auto Prompt skill`. Expect brief guidance, then supply your target agent and request. Use the [new-chat checklist (Chinese)](docs/chatgpt-acceptance.md) for full acceptance.
+Find both downloads and `SHA256SUMS.txt` under **Assets** on the [v1.0.2 release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2). Detailed instructions are in the [installation guide (Chinese)](docs/install.md).
 
-No Python preinstallation is required. Setup reuses compatible Python 3.9–3.14 or downloads the pinned official Python 3.13.12 Windows x64 runtime with SHA-256 verification into a project-owned directory. The first runtime download is about 10.4 MB. Setup does not change global Python, PATH or the registry; no pip, npm, Ollama, Docker or persistent service is needed.
+### Web: upload the plugin
 
-**A passed setup self-test confirms files and the strict launcher, while client enablement and dialogue behavior need a new-chat check.** Other platforms retain a [manual compatibility route](docs/install.md#手动兼容路径); this is not a claim of full host validation. Local installation does not automatically synchronize to web, mobile or cloud environments.
+1. Download [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-plugin.zip), [verify its checksum](docs/install.md#1-下载网页插件包), and keep it zipped.
+2. Open ChatGPT in your browser. Select **Plugins** in the left sidebar, select the `+` beside the search box, then **Upload plugin** and choose that ZIP.
+3. After the import-success message, select **View plugin**. Find **Auto Prompt Skill** under **Personal → Created by me**. Complete installation if the detail page still offers an install button.
+4. Start a new chat, type `@` and select the Auto Prompt plugin or skill, then send `Please invoke the Auto Prompt skill`. Supply your target agent and request when prompted.
+
+This route does not require the Windows installer or Python on your computer. Upload availability depends on account and workspace settings. The user supplied screenshots confirming import and three learning-prompt outputs covering generation, replacement and undo. Strict script execution, task isolation and structured input controls on the web remain unverified; see the [evidence scope (Chinese)](docs/validation.md#2026-10-08-网页版用户操作与回传结果).
+
+### Desktop: install locally
+
+1. Install and sign in to the ChatGPT **Windows desktop app** with local Work and local plugin-source support.
+2. Download [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip), [verify its checksum](docs/install.md#2-下载并核对文件), extract it and double-click `Install-Windows.cmd`.
+3. After `严格脚本自检：通过` (strict launcher self-test passed), refresh or restart the desktop client. In Plugins, switch to the local source printed by setup—normally **Auto Prompt Local** / `auto-prompt-local` for a new catalog—and install or refresh **Auto Prompt Skill**.
+4. Open a new Work chat connected to this computer, select the skill and send `Please invoke the Auto Prompt skill`. The [desktop guide (Chinese)](docs/install.md#二windows-桌面客户端本地安装) explains source names, success checks and missing-source troubleshooting.
+
+Setup reuses compatible Python 3.9–3.14 or downloads and verifies the pinned official Python 3.13.12 Windows x64 runtime into a project-owned directory. The first runtime download is about 10.4 MB. Global Python, PATH and the registry are unchanged; no pip, npm, Ollama, Docker or persistent service is required.
+
+Setup checks the files and strict launcher; client enablement still needs a new-chat check. Local source installation and web upload are separate routes: local setup does not automatically create a web personal entry. Each route needs the appropriate account and client features. Other platforms retain a [manual compatibility route](docs/install.md#手动兼容路径), without a claim of full platform validation.
 
 ## Everyday use
 
@@ -47,13 +63,13 @@ You can answer `Not sure yet`, `Suggest an option` or `Give me a draft first`. S
 
 **Natural-language conversation defaults to flexible mode.** The current model interprets and rewrites the request, so outputs may vary with the model and context. **Explicit strict mode** guarantees identical UTF-8 output for identical JSON under a fixed renderer and templates. Extracting JSON from natural language is outside that guarantee.
 
-Strict mode retains four Chinese/English development/general templates. It does not automatically understand or translate arbitrary requests. The skill clarifies conflicts with fixed templates or legacy language rules; the direct CLI does not perform semantic clarification. Target-specific formats, parameters and permissions cannot be inferred from an agent's name.
+Strict mode requires the host to execute the packaged script; the local route has been tested, while web execution has not. It retains four Chinese/English development/general templates. It does not automatically understand or translate arbitrary requests. The skill clarifies conflicts with fixed templates or legacy language rules; the direct CLI does not perform semantic clarification. Target-specific formats, parameters and permissions cannot be inferred from an agent's name.
 
 Compatibility is unchanged: complete legacy JSON without `strictMode` still means `true`; `strictMode=false` uses flexible model rewriting; the strict CLI retains its parameters and defaults. See the [input reference (Chinese)](skills/auto-prompt/references/input.md) for fields and language limits.
 
 ## Upgrade, recovery and other installation routes
 
-Download the bundle and checksum list again, run the same setup entry, then refresh the client plugin. Independent user files are preserved. Modified program files or conflicting paths stop installation with a clear error instead of being silently overwritten or merged. Reinstallation does not duplicate catalog entries.
+For local desktop updates, download the bundle and checksum list, run the same setup entry and refresh the client plugin. This local route preserves independent user files, stops on modified program files or conflicting paths, and avoids duplicate catalog entries. Web personal-import updates and their unverified scope have a separate [guide (Chinese)](docs/install.md#升级与自定义内容).
 
 **v1.0.2 has same-version revisions; the version number alone does not identify an update.** The 2026-10-05 revision improved interpreter reuse and setup checks. The 2026-10-07 revision improved recovery, concurrent runtime preparation, packaging checks and malformed-configuration errors. See [release notes (Chinese)](docs/release-v1.0.2.md).
 

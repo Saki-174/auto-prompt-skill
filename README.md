@@ -2,7 +2,7 @@
 
 在 ChatGPT 中，把“目标 Agent＋口语化需求”整理成可复制的提示词。适合希望把想法说清楚，再交给 Codex、ChatGPT、视频生成模型等工具处理的人；支持开发、学习、研究、写作和视频需求。
 
-[下载 Windows 整合包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip) · [完整安装教程](docs/install.md) · [English](README.en.md)
+[桌面整合包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip) · [网页插件包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-plugin.zip) · [完整安装教程](docs/install.md) · [English](README.en.md)
 
 ## 能做什么
 
@@ -11,20 +11,36 @@
 - **修改结果**：支持追加、替换、撤销要求，以及切换新任务。
 - **两种模式**：日常默认由当前模型灵活改写；明确选择严格模式时，由离线脚本固定渲染。
 
-技能只生成提示词，不执行提示词里的任务。**运行宿主**是加载技能的 ChatGPT；**目标 Agent**是接收生成结果的工具，两者可以不同。
+技能只生成提示词，不执行提示词里的任务。**运行宿主**是加载技能的 ChatGPT 网页或桌面环境；**目标 Agent**是接收生成结果的工具，两者可以不同。
 
-## 快速开始：Windows x64
+## 安装：选择你的 ChatGPT 环境
 
-准备支持本地 Work 和本地插件的 ChatGPT 桌面客户端，并登录账号。入口是否可用取决于账号、客户端和工作区设置；没有该入口时，安装文件无法代替宿主能力。参见 [OpenAI 本地插件说明](https://developers.openai.com/plugins/build/plugins)。
+| 使用环境 | 下载文件 | 安装入口 |
+| --- | --- | --- |
+| Windows 电脑浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.0.2-plugin.zip` | 插件页右上角 `＋` → 上传插件 |
+| Windows x64 的 ChatGPT 桌面客户端，本地 Work | `auto-prompt-skill-1.0.2-bundle.zip` | 解压 → `Install-Windows.cmd` → 客户端启用 |
 
-1. **下载并解压**：打开 [v1.0.2 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2)，在 **Assets** 下载 `auto-prompt-skill-1.0.2-bundle.zip` 和 `SHA256SUMS.txt`。按[教程核对校验值](docs/install.md#2-下载并核对文件)，解压 ZIP，打开含 `Install-Windows.cmd` 的文件夹。新用户选整合包，无需另下载 `plugin.zip` 或 `skill.zip`。
-2. **运行安装器**：双击 `Install-Windows.cmd`。成功时应显示安装完成或无需重复安装，并显示“严格脚本自检：通过”。保留有变更时打印的恢复事务 ID。
-3. **在客户端启用**：刷新或重启 ChatGPT，在 **Plugins** 选择安装器打印的本地来源，安装或刷新 **Auto Prompt Skill**；按客户端提示完成权限和启用步骤。
-4. **确认首次使用**：新建连接本机的 Work 聊天，发送 `请调用 Auto Prompt 技能`。应进入简短引导；再提供目标 Agent 和需求，获得提示词。完整检查见[新对话验收清单](docs/chatgpt-acceptance.md)。
+下载项与 `SHA256SUMS.txt` 均在 [v1.0.2 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.0.2)的 **Assets** 中。详细步骤见[安装教程](docs/install.md)。
 
-无需提前安装 Python。安装器会复用兼容的 Python 3.9–3.14；找不到时，下载并校验固定的 Python 3.13.12 Windows x64 运行时，放入项目专属目录。首次下载约 10.4 MB；不修改全局 Python、PATH 或注册表，也不需要 pip、npm、Ollama、Docker 或常驻服务。
+### 网页版：上传插件
 
-**安装器自检通过，只表示文件和严格启动器可用；客户端启用及对话表现仍需在新聊天确认。** 其他平台保留[手动兼容路径](docs/install.md#手动兼容路径)，未宣称完成全部宿主适配。本地安装不会自动同步到网页、移动端或云端。
+1. 下载 [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-plugin.zip)，按[教程核对校验值](docs/install.md#1-下载网页插件包)，保持 ZIP，不解压。
+2. 在浏览器打开 ChatGPT，点击左侧“插件”，再点击搜索框右侧的 `＋`，选择“上传插件”，选中刚下载的 ZIP。
+3. 看到“导入成功”后点击“查看插件”，在“个人 → 我创建的”找到 **Auto Prompt Skill**；若详情页仍有安装按钮，完成安装。
+4. 新建聊天，输入 `@` 并选择 Auto Prompt 插件或其技能，发送 `请调用 Auto Prompt 技能`，按引导提供目标 Agent 和需求。
+
+这条路径不需要运行 Windows 安装器或在电脑上安装 Python。上传入口受账号和工作区设置影响。用户已提供网页导入截图，以及学习任务的生成、替换和撤销结果；网页版严格脚本执行、跨任务隔离及结构化提示框尚未验证，见[证据范围](docs/validation.md#2026-10-08-网页版用户操作与回传结果)。
+
+### 桌面客户端：本地安装
+
+1. 安装并登录支持本地 Work 和本地插件来源的 ChatGPT **Windows 桌面客户端**。
+2. 下载 [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip)，按[教程核对校验值](docs/install.md#2-下载并核对文件)，解压并双击 `Install-Windows.cmd`。
+3. 看到“严格脚本自检：通过”后，刷新或重启桌面客户端，在插件页切换到安装器打印的本地来源（新建来源通常为 **Auto Prompt Local**／`auto-prompt-local`），安装或刷新 **Auto Prompt Skill**。
+4. 新建连接本机的 Work 聊天，选择技能并发送 `请调用 Auto Prompt 技能`。详细入口辨认、成功标志和找不到来源的处理见[桌面教程](docs/install.md#二windows-桌面客户端本地安装)。
+
+安装器复用兼容 Python 3.9–3.14；找不到时下载并校验固定的 Python 3.13.12 Windows x64 运行时，放入项目专属目录。首次运行时下载约 10.4 MB；不修改全局 Python、PATH 或注册表，也不需要 pip、npm、Ollama、Docker 或常驻服务。
+
+安装器自检确认文件和严格启动器可用，客户端启用仍需新聊天验证。本地来源与网页上传是独立安装路径，不会因本地安装而自动出现网页个人条目。账号和客户端必须提供相应入口；其他平台保留[手动兼容路径](docs/install.md#手动兼容路径)，不宣称全部平台已验收。
 
 ## 日常使用
 
@@ -47,13 +63,13 @@
 
 **灵活模式是自然语言对话的默认值**，由当前模型理解和改写，输出会随模型、上下文变化。**严格模式需明确选择**，固定脚本和模板下，相同 JSON 输入得到相同 UTF-8 输出；自然语言抽取成 JSON 的过程不在确定性保证内。
 
-严格模式保留原有四套中英文开发／通用模板，不自动理解、翻译任意需求。若明确要求与固定模板或旧语言规则冲突，技能先澄清；直接 CLI 不做语义澄清。未知目标 Agent 的专有格式、参数和授权不能靠名称推断。
+严格模式需要宿主实际执行包内脚本；本地路径已验证，网页版执行尚未验收。它保留原有四套中英文开发／通用模板，不自动理解、翻译任意需求。若明确要求与固定模板或旧语言规则冲突，技能先澄清；直接 CLI 不做语义澄清。未知目标 Agent 的专有格式、参数和授权不能靠名称推断。
 
 兼容行为保持不变：完整旧 JSON 缺省 `strictMode` 仍按 `true`；`strictMode=false` 交由当前模型灵活改写；直接运行严格脚本的旧参数和默认值保留。字段和语言限制见[输入参考](skills/auto-prompt/references/input.md)。
 
 ## 升级、恢复与其他安装方式
 
-重新下载整合包和校验清单，运行同一个安装入口，再刷新客户端插件。独立用户文件保留；程序文件被修改或与新版路径冲突时，安装器停止并列出问题，不自动覆盖或拼接规则。重复安装不会重复登记。
+桌面本地升级使用整合包和同一个安装入口，再刷新客户端插件。这条路径保留独立用户文件；程序文件被修改或与新版路径冲突时，安装器停止并列出问题，不自动覆盖或拼接规则，重复安装不会重复登记。网页个人导入的更新方式和未验证项另见[升级说明](docs/install.md#升级与自定义内容)。
 
 **v1.0.2 有同版本修订，版本号不能单独判断是否更新。** 2026-10-05 修订了解释器复用和安装自检；2026-10-07 修订了恢复、并发运行时准备、打包检查和损坏配置错误。详见[发布说明](docs/release-v1.0.2.md)。
 
