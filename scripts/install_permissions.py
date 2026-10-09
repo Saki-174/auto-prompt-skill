@@ -50,6 +50,18 @@ if os.name == "nt":
         checked(from_string(sddl, 1, ctypes.byref(pointer), None))
         return pointer
 
+    def canonical_dacl(sddl):
+        """Normalize SID aliases through Windows, without changing ACE rights."""
+        sd = descriptor(sddl)
+        text = P()
+        try:
+            checked(to_string(sd, 1, 4, ctypes.byref(text), None))
+            return ctypes.wstring_at(text)
+        finally:
+            if text.value:
+                free(text)
+            free(sd)
+
     def private_sddl():
         token = w.HANDLE()
         checked(open_token(process(), 8, ctypes.byref(token)))
@@ -66,7 +78,7 @@ if os.name == "nt":
                 free(text)
         finally:
             close(token)
-        return "D:P(A;OICI;FA;;;" + sid + ")(A;OICI;FA;;;SY)"
+        return canonical_dacl("D:P(A;OICI;FA;;;" + sid + ")(A;OICI;FA;;;SY)")
 
 
 def capture(path):

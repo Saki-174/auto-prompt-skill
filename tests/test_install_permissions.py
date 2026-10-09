@@ -34,6 +34,23 @@ $a.GetSecurityDescriptorSddlForm([Security.AccessControl.AccessControlSections]:
 
 @unittest.skipUnless(os.name == "nt", "requires Windows file ACLs")
 class WindowsPermissionTests(unittest.TestCase):
+    def test_numeric_well_known_sid_is_canonicalized_without_weakening_acl(self):
+        permissions = installer.permissions
+        numeric = "D:P(A;OICI;FA;;;S-1-5-18)(A;OICI;GR;;;S-1-1-0)"
+        expected = "D:P(A;OICI;FA;;;SY)(A;OICI;GR;;;WD)"
+        self.assertEqual(permissions.canonical_dacl(numeric), expected)
+        # A well-known current identity must work at the actual creation boundary.
+        # Only a synthetic descriptor is used; no impersonation or elevation.
+        expected_private = permissions.private_sddl()
+        numeric_private = expected_private.replace(";;;SY)", ";;;S-1-5-18)")
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(permissions, "private_sddl", return_value=permissions.canonical_dacl(numeric_private)):
+            path = Path(folder) / "synthetic-known-sid"
+            permissions.mkdir_private(path)
+            actual = self.security(path).partition("D:")[2]
+            self.assertTrue(actual.startswith("P("))
+            self.assertEqual(set(re.findall(r"\([^()]+\)", actual)), set(re.findall(r"\([^()]+\)", expected_private)))
+
     def security(self, path, operation="get"):
         ps = Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
         env = dict(os.environ)
