@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "baseline_version": "1.1.1",
+  "default_status": "not_run",
+  "evidence_scope": "Synthetic inputs for manual A/B evaluation. Parsing does not prove host loading or generation quality.",
+  "cases": [
+    {
+      "id": "Q01",
+      "domain": "writing",
+      "goal": "简单请求直接转换，必要占位符不变成额外问卷",
+      "turns": [{"input": "给 ChatGPT：写一封英文生日邀请函，正文严格 200 words，语气自然。时间地点没定，用占位符，不编造活动安排。只整理提示词，只给结果。", "expected_action": "generate", "blockers": ["英文、严格 200 words、正文对象、占位符和不编造安排均保留", "不把英文变成中文或自行定义称呼/落款计数范围"], "quality_focus": ["没有多余角色背景、审批或回滚章节", "不追问已明确可用占位符的信息", "正文可直接复制，无修改入口尾注"]}]
+    },
+    {
+      "id": "Q02",
+      "domain": "development",
+      "goal": "复杂任务不因缩短而失去精确约束",
+      "turns": [{"input": "给 Codex：C:\\demo\\alpha 中 CacheStore.getItem 的超时从 30 秒改到 45 秒；首次之外最多重试 2 次。环境 Python 3.13.16，只改 cache.py 和 tests/test_cache.py，不加依赖、不重构、不提交、不上传。保留已有修改，验证时模拟超时不要真的等 45 秒。只转换提示词。", "expected_action": "generate", "blockers": ["路径、方法、版本、数字及两文件范围无遗漏", "总尝试次数不超过 3，明确允许的测试与全部禁止事项不变", "不读取项目或声称已定位实现"], "quality_focus": ["去掉重复禁令但保留其语义", "必要步骤足够定位和验证，不添加未指定测试框架", "不为了更短省去失败行为验证或已有修改保护"]}]
+    },
+    {
+      "id": "Q03",
+      "domain": "review",
+      "goal": "必要展开不擅自收窄只读权限",
+      "turns": [{"input": "给 Codex：只读审查当前仓库安装与升级逻辑，给有证据的建议；允许运行确实不写文件、不改变环境的已有检查。不改文件、不安装、不提交、不推送。只转换提示词。", "expected_action": "generate", "blockers": ["已有只读检查许可保留，不能变成禁止所有测试和脚本", "审查范围仍是安装与升级，不变成全仓库审计", "没有实施修复、安装或提权步骤"], "quality_focus": ["每个审查步骤与安装/升级目标直接相关", "证据与建议便于区分，避免大段泛用治理要求"]}]
+    },
+    {
+      "id": "Q04",
+      "domain": "research",
+      "goal": "稀疏材料及精确篇幅约束的忠实表达",
+      "turns": [{"input": "给 ChatGPT：只根据合成材料“实验 A 有 20 个样本，其中 12 个选择方案甲；样本仅来自一个班级”写中文研究摘要，正文严格 120 字。不联网，不补研究目的、方法、统计指标或其余样本选择，不推因果或推广到总体。材料不足时说明限制，不编造。只转换提示词。", "expected_action": "generate", "blockers": ["20 个样本、12 个选择甲、一个班级、合成材料及全部禁止事项保留", "120 字不变成 120 字左右，不把样本改称人数", "不声称已完成摘要或自动保证目标 Agent 的字数"], "quality_focus": ["不为显得专业添加研究流程、统计检验或额外指标", "材料不足的处理要求与禁止编造保持一致"]}]
+    },
+    {
+      "id": "Q05",
+      "domain": "learning",
+      "goal": "简洁输出中的局部修订与完整撤销",
+      "turns": [
+        {"input": "给 ChatGPT：中文教初学者概率，先生活例子再概念，最后两道练习题。不用微积分，先不附答案，等我作答再批改。只转换提示词，只给结果。", "expected_action": "generate", "blockers": ["教学顺序、两道、中文、无微积分及等待批改保留"], "quality_focus": ["适合学习任务，没有代码修改或回滚章节", "不过度增加概念范围、章节或强制教学机制"]},
+        {"input": "改成三道，每题后直接附答案和解析，其他不变。", "expected_action": "revise", "blockers": ["三道与附答案正确替换原约束，其他要求保留"], "quality_focus": ["返回完整更新提示词，不重复确认明确替换"]},
+        {"input": "撤销刚才修改。", "expected_action": "revise", "blockers": ["恢复两道、不附答案、等作答批改；无旧新冲突"], "quality_focus": ["没有额外解释、格式漂移或 diff 伪补丁"]}
+      ]
+    },
+    {
+      "id": "Q06",
+      "domain": "video",
+      "goal": "通用创作草案保持可用且不猜专有能力",
+      "turns": [{"input": "给视频模型，一条雨天咖啡店广告提示词，要安静、有质感，不出现品牌和文字。模型和时长暂不确定，先给通用草案，不继续问，只给结果。", "expected_action": "generate", "blockers": ["雨天咖啡店、安静质感、无品牌文字均保留", "不编造模型参数、4K、帧率、精确时长或工具能力", "不执行生成视频"], "quality_focus": ["创作画面服务主题，可选镜头不伪装成已知事实", "不因缺参数而无法交付，不进入开发模板或问卷"]}]
+    }
+  ]
+}

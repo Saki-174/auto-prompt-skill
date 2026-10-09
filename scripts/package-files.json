@@ -74,6 +74,22 @@
     "scripts/install_permissions.py",
     "tests/test_install_permissions.py",
     "docs/release-v1.1.1.md",
+    "docs/prompt-quality.md",
+    "tests/fixtures/prompt-quality.json",
+    "docs/README.md",
+    "docs/usage.md",
+    "docs/development.md",
+    "docs/maintenance.md",
+    "docs/project-structure.md",
+    "docs/releases/README.md",
+    "docs/history/README.md",
+    "docs/history/validation-records.md",
+    "docs/releases/v1.0.1.md",
+    "docs/releases/v1.0.2.md",
+    "docs/releases/v1.1.0.md",
+    "docs/releases/v1.1.1.md",
+    "docs/history/v1.0.1-design.md",
+    "docs/history/git-history.md",
     "docs/runtime.md"
   ]
 }
