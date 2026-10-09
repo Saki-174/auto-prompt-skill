@@ -61,6 +61,30 @@ After generation, say `Append…`, `Replace… with…` or `Undo the last change
 
 You can answer `Not sure yet`, `Suggest an option` or `Give me a draft first`. Suggestions stay separate from confirmed requirements. A suitable structured input tool is used when the host exposes it; otherwise clarification uses ordinary text.
 
+## How it works
+
+```mermaid
+flowchart TD
+    A[Invoke Auto Prompt with a request] --> B[Host loads skill instructions]
+    B --> C[Model reads JSON fields or interprets the request]
+    C --> D[Fill gaps and clarify key ambiguities as needed]
+    D --> E{Choose mode}
+    E -->|Flexible| F[Current model drafts and checks the prompt]
+    E -->|Strict| G[Verify original files, JSON and runtime]
+    G --> H[Original script validates input and renders a fixed template]
+    F --> I[Return a copyable prompt]
+    H --> I
+    I -->|Append, replace or undo| C
+```
+
+Complete input without key ambiguity is processed directly; invoking only the skill starts guidance. If strict mode lacks execution tools, verified original files or a maintained runtime, it reports that execution did not occur. Model-generated text cannot stand in for script output.
+
+- The **model** interprets, clarifies, rewrites flexibly and handles conversational revisions. Naming a target agent neither switches the current model nor calls that agent.
+- **Skill instructions** define information preservation, clarification, structure and checks. The plugin includes no generation model and calls no external model API.
+- The **strict script** validates input and renders fixed templates. Identical JSON produces identical output with fixed scripts and templates; converting natural language to JSON still depends on the model.
+
+Flexible quality depends jointly on the current model, skill instructions, input completeness and visible context. No evaluation currently supports a fixed influence percentage or a cross-model ranking. See [runtime responsibilities and quality limits (Chinese)](docs/runtime.md).
+
 ## Flexible and strict modes
 
 **Natural-language conversation defaults to flexible mode.** The current model interprets and rewrites the request, so outputs may vary with the model and context. **Explicit strict mode** guarantees identical UTF-8 output for identical JSON under a fixed renderer and templates. Extracting JSON from natural language is outside that guarantee.

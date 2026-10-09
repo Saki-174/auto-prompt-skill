@@ -73,6 +73,7 @@
     "docs/conversation-regression.md",
     "scripts/install_permissions.py",
     "tests/test_install_permissions.py",
-    "docs/release-v1.1.1.md"
+    "docs/release-v1.1.1.md",
+    "docs/runtime.md"
   ]
 }
