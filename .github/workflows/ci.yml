@@ -25,3 +25,22 @@ jobs:
         with:
           name: auto-prompt-${{ matrix.os }}-${{ matrix.python }}
           path: dist/*
+  windows-install:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install, upgrade from v1.0.2 and roll back in isolated homes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $priorBundle = Join-Path $env:RUNNER_TEMP 'auto-prompt-skill-1.0.2-bundle.zip'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.0.2/auto-prompt-skill-1.0.2-bundle.zip' -OutFile $priorBundle
+          & ./tests/windows_acceptance.ps1 -AllowDownload -RecentBundle $priorBundle -OutputDirectory (Join-Path $env:RUNNER_TEMP 'auto-prompt-integration')
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: windows-install-summary
+          path: ${{ runner.temp }}/auto-prompt-integration/**/windows-acceptance.json
+          retention-days: 7
+          if-no-files-found: warn

@@ -31,7 +31,7 @@ Find both downloads and `SHA256SUMS.txt` under **Assets** on the [v1.1.0 release
 3. After the import-success message, select **View plugin**. Find **Auto Prompt Skill** under **Personal → Created by me**. Complete installation if the detail page still offers an install button.
 4. Start a new chat, type `@` and select the Auto Prompt plugin or skill, then send `Please invoke the Auto Prompt skill`. Supply your target agent and request when prompted.
 
-Upload availability depends on account and workspace settings. Whether the web route depends on a local Windows installer or Python has not been independently verified. Strict script execution, task isolation and structured input controls on the web also remain unverified; see the [validation limits (Chinese)](docs/validation.md#网页版验证边界).
+Upload availability depends on account and workspace settings. The web plugin ZIP includes scripts and templates, but does not prepare Python. Strict mode needs execution tools and an interpreter meeting the maintenance policy in the actual execution environment. Windows setup prepares a local runtime; it does not automatically repair a cloud interpreter. Follow the [strict-mode environment check (Chinese)](docs/install.md#6-严格模式先检查执行环境) and keep web verification separate from local results; see the [validation limits (Chinese)](docs/validation.md#网页版验证边界).
 
 ### Desktop: install locally
 
@@ -88,7 +88,7 @@ python -m unittest discover -s tests -v
 python scripts/build_release.py
 ~~~
 
-Release packages use a public-file allowlist and exclude runtimes, user configuration, backups and machine logs. See [validation (Chinese)](docs/validation.md) for automated checks, the Windows integration entry and unverified scope. Guidance, input controls and prompt quality require [real client acceptance (Chinese)](docs/chatgpt-acceptance.md).
+Release packages use a public-file allowlist and exclude runtimes, user configuration, backups and machine logs. See [validation (Chinese)](docs/validation.md) for automated checks, the Windows integration entry and unverified scope. Guidance, input controls and prompt quality require [real client acceptance (Chinese)](docs/chatgpt-acceptance.md) and the [12 dialogue regression cases (Chinese)](docs/conversation-regression.md).
 
 ## License and sources
 

@@ -31,7 +31,7 @@
 3. 看到“导入成功”后点击“查看插件”，在“个人 → 我创建的”找到 **Auto Prompt Skill**；若详情页仍有安装按钮，完成安装。
 4. 新建聊天，输入 `@` 并选择 Auto Prompt 插件或其技能，发送 `请调用 Auto Prompt 技能`，按引导提供目标 Agent 和需求。
 
-上传入口受账号和工作区设置影响。网页版是否依赖本机 Windows 安装器或 Python 尚未完成独立验证；严格脚本执行、跨任务隔离及结构化提示框也尚未验证，见[验证边界](docs/validation.md#网页版验证边界)。
+上传入口受账号和工作区设置影响。网页插件包包含脚本与模板，不准备 Python；严格模式还需当前执行环境的工具和符合维护策略的解释器。Windows 安装器只准备本机运行时，不自动修复云端环境。先按[严格模式环境检查](docs/install.md#6-严格模式先检查执行环境)确认条件；网页端的独立验证范围见[验证边界](docs/validation.md#网页版验证边界)。
 
 ### 桌面客户端：本地安装
 
@@ -88,7 +88,7 @@ python -m unittest discover -s tests -v
 python scripts/build_release.py
 ~~~
 
-整合包按公开文件白名单构建，不包含运行时、用户配置、备份或机器日志。自动测试、Windows 集成入口及未验证范围见[验证说明](docs/validation.md)；对话引导、提示框和需求质量需另做[真实客户端验收](docs/chatgpt-acceptance.md)。
+整合包按公开文件白名单构建，不包含运行时、用户配置、备份或机器日志。自动测试、Windows 集成入口及未验证范围见[验证说明](docs/validation.md)；对话引导、提示框和需求质量需另做[真实客户端验收](docs/chatgpt-acceptance.md)和[12 项对话回归](docs/conversation-regression.md)。
 
 ## 许可与来源
 

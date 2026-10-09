@@ -67,6 +67,9 @@
     "tests/test_security_regressions.py",
     "docs/security-maintenance.md",
     "docs/history-rewrite.md",
-    "docs/release-v1.1.0.md"
+    "docs/release-v1.1.0.md",
+    "tests/fixtures/conversations.json",
+    "tests/test_maintenance_contract.py",
+    "docs/conversation-regression.md"
   ]
 }

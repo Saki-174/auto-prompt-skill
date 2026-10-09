@@ -3,6 +3,7 @@ param(
     [string]$RuntimeArchive,
     [string]$LegacyBundle,
     [string]$PreviousBundle,
+    [string]$RecentBundle,
     [switch]$AllowDownload,
     [Parameter(Mandatory=$true)][string]$OutputDirectory
 )
@@ -119,29 +120,34 @@ try {
         Check (($before.files.Count -eq $after.files.Count) -and (@($before.files.Keys | Where-Object { $before.files[$_] -ne $after.files[$_] }).Count -eq 0)) 'rollback restores exact v1.0.0 and user files'
         Check (-not (Test-Path (Join-Path $legacy '.codex\auto-prompt\runtime.json'))) 'rollback removes newly added runtime pointer'
     }
-    if ($PreviousBundle) {
-        Check ((Get-FileHash -LiteralPath $PreviousBundle).Hash.ToLowerInvariant() -eq '56dfd2f786f3bc0f674edfe1f22b6bd40d8a8cb4d6faa0c168b346574b2c05f9') 'v1.0.1 bundle integrity'
+    foreach ($prior in @(
+        [pscustomobject]@{path=$PreviousBundle; version='1.0.1'; sha256='56dfd2f786f3bc0f674edfe1f22b6bd40d8a8cb4d6faa0c168b346574b2c05f9'},
+        [pscustomobject]@{path=$RecentBundle; version='1.0.2'; sha256='92023ff94488cba53c76917dd7b075bcf3baa6638e01ec7d502f96a4ac60d8dd'}
+    )) {
+        if (-not $prior.path) { continue }
+        Check ((Get-FileHash -LiteralPath $prior.path).Hash.ToLowerInvariant() -eq $prior.sha256) ("v" + $prior.version + " bundle integrity")
         Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $previousSource = Join-Path $evidence 'previous-source'
-        [IO.Compression.ZipFile]::ExtractToDirectory([IO.Path]::GetFullPath($PreviousBundle),$previousSource)
+        $previousSource = Join-Path $evidence ('previous-source-' + $prior.version)
+        [IO.Compression.ZipFile]::ExtractToDirectory([IO.Path]::GetFullPath($prior.path),$previousSource)
         foreach ($mode in @('plugin','skill')) {
-            $previousUser = Join-Path $evidence ('previous-' + $mode)
+            $previousUser = Join-Path $evidence ('previous-' + $prior.version + '-' + $mode)
             & $runtime.python -I (Join-Path $previousSource 'auto-prompt-skill\scripts\install.py') --home $previousUser --mode $mode | Out-Null
-            Check ($LASTEXITCODE -eq 0) "real v1.0.1 $mode installation prepared"
+            Check ($LASTEXITCODE -eq 0) "real v$($prior.version) $mode installation prepared"
             $relative = if ($mode -eq 'plugin') { '.codex\plugins\local-auto-prompt-skill' } else { '.agents\skills\auto-prompt' }
             $target = Join-Path $previousUser $relative
             [IO.File]::WriteAllText((Join-Path $target 'preferences.txt'),'user-owned preference')
             $before = Snapshot $previousUser $mode
             $oldRuntimeHash = (Get-FileHash (Join-Path $previousUser '.codex\auto-prompt\runtime.json')).Hash
             $upgrade = Setup @('-HomeDirectory',$previousUser,'-Mode',$mode,'-PythonPath',$runtime.python,'-Offline')
-            Check ($upgrade.version -eq $expectedVersion -and $upgrade.changed) "v1.0.1 $mode upgrade installs current version"
+            Check ($upgrade.selfTest.status -eq 'passed') "v$($prior.version) $mode upgrade self-check passed"
+            Check ($upgrade.version -eq $expectedVersion -and $upgrade.changed) "v$($prior.version) $mode upgrade installs current version"
             Check ((Get-Content (Join-Path $target 'preferences.txt') -Raw) -eq 'user-owned preference') "$mode upgrade preserves custom file"
             $again = Setup @('-HomeDirectory',$previousUser,'-Mode',$mode,'-PythonPath',$runtime.python,'-Offline')
             Check (-not $again.changed) "$mode upgraded installation is idempotent"
             $rolled = Setup @('-HomeDirectory',$previousUser,'-Mode',$mode,'-PythonPath',$runtime.python,'-Offline','-Rollback',$upgrade.transaction)
             $after = Snapshot $previousUser $mode
             Check ($before.catalog -eq $after.catalog) "$mode rollback restores prior catalog"
-            Check (($before.files.Count -eq $after.files.Count) -and (@($before.files.Keys | Where-Object { $before.files[$_] -ne $after.files[$_] }).Count -eq 0)) "$mode rollback restores exact v1.0.1 and user files"
+            Check (($before.files.Count -eq $after.files.Count) -and (@($before.files.Keys | Where-Object { $before.files[$_] -ne $after.files[$_] }).Count -eq 0)) "$mode rollback restores exact v$($prior.version) and user files"
             Check ((Get-FileHash (Join-Path $previousUser '.codex\auto-prompt\runtime.json')).Hash -eq $oldRuntimeHash) "$mode rollback preserves prior runtime registration"
         }
     }
@@ -193,7 +199,7 @@ Get-APPython -HomeDirectory $HomeDirectory -PackageRoot $PackageRoot -RuntimeArc
 } catch {
     $failure = $_.Exception.Message
 } finally {
-    $report = @{passed=$passed; failure=$failure; version=$expectedVersion; powershell=$PSVersionTable.PSVersion.ToString(); os=[Environment]::OSVersion.VersionString; checks=$checks.ToArray(); legacyChecked=[bool]$LegacyBundle; previousChecked=[bool]$PreviousBundle; dedicatedDownloadRequested=[bool]$AllowDownload; scope='Isolated user directories on this Windows host; not a clean VM or ChatGPT UI acceptance.'}
+    $report = @{passed=$passed; failure=$failure; version=$expectedVersion; powershell=$PSVersionTable.PSVersion.ToString(); os=[Environment]::OSVersion.VersionString; checks=$checks.ToArray(); legacyChecked=[bool]$LegacyBundle; previousChecked=[bool]$PreviousBundle; recentChecked=[bool]$RecentBundle; dedicatedDownloadRequested=[bool]$AllowDownload; scope='Isolated user directories on this Windows host; not a clean VM or ChatGPT UI acceptance.'}
     $reportPath = Join-Path $evidence 'windows-acceptance.json'
     [IO.File]::WriteAllText($reportPath,($report | ConvertTo-Json -Depth 10),(New-Object Text.UTF8Encoding($false)))
     Write-Output $reportPath
