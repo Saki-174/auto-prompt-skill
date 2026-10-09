@@ -1,10 +1,10 @@
-# Auto Prompt Skill · v1.1.0
+# Auto Prompt Skill · v1.1.1
 
-> v1.1.0 security fixes strengthen file, installation, input and runtime protections. See [release notes (Chinese)](docs/release-v1.1.0.md) for changes and upgrade limits.
+> v1.1.1 security fixes preserve Windows access permissions during upgrade and rollback, and protect backups and temporary files. See [release notes (Chinese)](docs/release-v1.1.1.md) for changes and upgrade limits.
 
 Turn a target agent and a rough request into a copyable prompt inside ChatGPT. For people who want to clarify an idea before handing it to Codex, ChatGPT or a video model. Covers software, study, research, writing and video tasks.
 
-[Desktop bundle](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip) · [Web plugin ZIP](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip) · [Installation guide (Chinese)](docs/install.md) · [中文](README.md)
+[Desktop bundle](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-bundle.zip) · [Web plugin ZIP](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-plugin.zip) · [Installation guide (Chinese)](docs/install.md) · [中文](README.md)
 
 ## What it does
 
@@ -19,14 +19,14 @@ The skill generates prompts; it does not execute their tasks. The **host** is th
 
 | Environment | Download | Entry point |
 | --- | --- | --- |
-| ChatGPT in a browser on Windows | `auto-prompt-skill-1.1.0-plugin.zip` | Plugins → top-right `+` → Upload plugin |
-| ChatGPT Windows x64 desktop app, local Work | `auto-prompt-skill-1.1.0-bundle.zip` | Extract → `Install-Windows.cmd` → enable in the client |
+| ChatGPT in a browser on Windows | `auto-prompt-skill-1.1.1-plugin.zip` | Plugins → top-right `+` → Upload plugin |
+| ChatGPT Windows x64 desktop app, local Work | `auto-prompt-skill-1.1.1-bundle.zip` | Extract → `Install-Windows.cmd` → enable in the client |
 
-Find both downloads and `SHA256SUMS.txt` under **Assets** on the [v1.1.0 release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0). Detailed instructions are in the [installation guide (Chinese)](docs/install.md).
+Find both downloads and `SHA256SUMS.txt` under **Assets** on the [v1.1.1 release](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.1). Detailed instructions are in the [installation guide (Chinese)](docs/install.md).
 
 ### Web: upload the plugin
 
-1. Download [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip), [verify its checksum](docs/install.md#1-下载网页插件包), and keep it zipped.
+1. Download [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-plugin.zip), [verify its checksum](docs/install.md#1-下载网页插件包), and keep it zipped.
 2. Open ChatGPT in your browser. Select **Plugins** in the left sidebar, select the `+` beside the search box, then **Upload plugin** and choose that ZIP.
 3. After the import-success message, select **View plugin**. Find **Auto Prompt Skill** under **Personal → Created by me**. Complete installation if the detail page still offers an install button.
 4. Start a new chat, type `@` and select the Auto Prompt plugin or skill, then send `Please invoke the Auto Prompt skill`. Supply your target agent and request when prompted.
@@ -36,7 +36,7 @@ Upload availability depends on account and workspace settings. The web plugin ZI
 ### Desktop: install locally
 
 1. Install and sign in to the ChatGPT **Windows desktop app** with local Work and local plugin-source support.
-2. Download [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip), [verify its checksum](docs/install.md#2-下载并核对文件), extract it and double-click `Install-Windows.cmd`.
+2. Download [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-bundle.zip), [verify its checksum](docs/install.md#2-下载并核对文件), extract it and double-click `Install-Windows.cmd`.
 3. After `严格脚本自检：通过` (strict launcher self-test passed), refresh or restart the desktop client. In Plugins, switch to the local source printed by setup—normally **Auto Prompt Local** / `auto-prompt-local` for a new catalog—and install or refresh **Auto Prompt Skill**.
 4. Open a new Work chat connected to this computer, select the skill and send `Please invoke the Auto Prompt skill`. The [desktop guide (Chinese)](docs/install.md#二windows-桌面客户端本地安装) explains source names, success checks and missing-source troubleshooting.
 
@@ -73,7 +73,7 @@ Compatibility is unchanged: complete legacy JSON without `strictMode` still mean
 
 For local desktop updates, download the bundle and checksum list, run the same setup entry and refresh the client plugin. This local route preserves independent user files, stops on modified program files or conflicting paths, and avoids duplicate catalog entries. Web personal-import updates and their unverified scope have a separate [guide (Chinese)](docs/install.md#升级与自定义内容).
 
-For **v1.1.0**, download the new package and checksums, rerun setup and refresh the plugin. If an existing interpreter does not meet the patch policy, setup prepares a dedicated runtime without upgrading shared dependencies. See [v1.1.0 release notes (Chinese)](docs/release-v1.1.0.md).
+For **v1.1.1**, download the new package and checksums, rerun setup and refresh the plugin. If an existing interpreter does not meet the patch policy, setup prepares a dedicated runtime without upgrading shared dependencies. See [v1.1.1 release notes (Chinese)](docs/release-v1.1.1.md).
 
 Historically, **v1.0.2 has same-version revisions; the version number alone does not identify an update.** The 2026-10-05 revision improved interpreter reuse and setup checks. The 2026-10-07 revision improved recovery, concurrent runtime preparation, packaging checks and malformed-configuration errors. See [release notes (Chinese)](docs/release-v1.0.2.md).
 

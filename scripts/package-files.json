@@ -70,6 +70,9 @@
     "docs/release-v1.1.0.md",
     "tests/fixtures/conversations.json",
     "tests/test_maintenance_contract.py",
-    "docs/conversation-regression.md"
+    "docs/conversation-regression.md",
+    "scripts/install_permissions.py",
+    "tests/test_install_permissions.py",
+    "docs/release-v1.1.1.md"
   ]
 }

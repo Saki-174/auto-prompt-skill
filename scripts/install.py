@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Install Auto Prompt with file ownership, conflict detection and rollback."""
 import argparse
+import importlib.util
 import hashlib
 import json
 import os
@@ -17,6 +18,9 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parent.parent
 PLUGIN_NAME = "auto-prompt-skill"
 MANIFEST = ".auto-prompt-install.json"
+_permission_spec = importlib.util.spec_from_file_location("install_permissions", Path(__file__).with_name("install_permissions.py"))
+permissions = importlib.util.module_from_spec(_permission_spec)
+_permission_spec.loader.exec_module(permissions)
 
 
 def unique_object(pairs):
@@ -109,14 +113,58 @@ def current_state(paths):
     return result
 
 
+def permission_state(paths):
+    result = {}
+    for key, path in paths.items():
+        if path is None or not path.exists():
+            result[key] = None
+        elif key == "target":
+            entries = [path, *sorted(path.rglob("*"))]
+            result[key] = {}
+            for item in entries:
+                plain_path(item)
+                name = "." if item == path else item.relative_to(path).as_posix()
+                result[key][name] = permissions.capture(item)
+        else:
+            plain_path(path)
+            result[key] = permissions.capture(path)
+    return result
+
+
+def apply_tree_permissions(root, snapshot):
+    # Include empty user directories. Restore each descriptor individually;
+    # the Windows API deliberately does not propagate parent ACEs to children.
+    for name, security in snapshot.items():
+        path = root if name == "." else root / relative_name(name)
+        plain_path(path)
+        if not path.exists():
+            path.mkdir(parents=True)
+        permissions.apply(path, security)
+
+
+def matches(paths, state, security=None):
+    if current_state(paths) != {key: state[key] for key in paths}:
+        return False
+    return security is None or permission_state(paths) == {key: security[key] for key in paths}
+
+
+def journal_permissions(journal, phase):
+    if journal["schema"] != 2:
+        return None
+    return journal.get("permissions", {}).get(phase)
+
+
 def write_atomic(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temporary = tempfile.mkstemp(prefix=".auto-prompt-", dir=path.parent)
+    original = permissions.capture(path) if path.exists() else None
+    fd, temporary = permissions.temporary_file(path.parent)
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
+        if original is not None:
+            permissions.apply(temporary, original)
         os.replace(temporary, path)
     finally:
         if os.path.exists(temporary):
@@ -241,8 +289,10 @@ def interrupted_restore_gap(transaction, journal, now):
         return False
     stage = current_state({"target": transaction / "restore-stage"})["target"]
     moved = current_state({"target": transaction / "restore-displaced"})["target"]
-    return (stage == receipt["before"] and
-            ((receipt["original"] is not None and moved == receipt["original"])
+    return (stage == receipt["before"]
+            and matches({"target": transaction / "restore-stage"}, journal["before"], journal_permissions(journal, "before")) and
+            ((receipt["original"] is not None and moved == receipt["original"]
+              and matches({"target": transaction / "restore-displaced"}, journal["after"], journal_permissions(journal, "after")))
              or (receipt["original"] is None and moved is None
                  and interrupted_target_gap(transaction, journal, now))))
 
@@ -259,27 +309,37 @@ def restore_target(home, path, transaction, journal):
         receipt = {"schema": 1, "phase": "preparing", "original": current,
                    "before": journal["before"]["target"]}
         write_atomic(transaction / "restore.json", encoded(receipt))
+    expected_security = journal_permissions(journal, "after")
+    if expected_security is not None and receipt["original"] is None:
+        expected_security = {"target": None}
     # A completed preparation is immutable evidence for the rename gap.
     if receipt["phase"] == "preparing":
-        if current != receipt["original"] or moved.exists():
+        if (current != receipt["original"] or moved.exists()
+                or not matches({"target": path}, {"target": receipt["original"]},
+                               expected_security)):
             raise ValueError("target changed during restoration preparation; recovery stopped")
         if stage.exists():
             tree_bytes(stage)
             shutil.rmtree(stage)  # Only this receipt's incomplete private staging copy.
         if receipt["before"] is not None:
             shutil.copytree(transaction / "before/target", stage)
+            security = journal_permissions(journal, "before")
+            if security is not None:
+                apply_tree_permissions(stage, security["target"])
             if current_state({"target": stage})["target"] != receipt["before"]:
                 raise ValueError("restoration staging verification failed")
         receipt["phase"] = "ready"
         write_atomic(transaction / "restore.json", encoded(receipt))
-    if receipt["before"] is not None and current_state({"target": stage})["target"] != receipt["before"]:
+    if receipt["before"] is not None and not matches({"target": stage}, journal["before"], journal_permissions(journal, "before")):
         raise ValueError("restoration staging is missing or modified; recovery stopped")
     current = current_state({"target": path})["target"]
     if current is None and moved.exists():
         if not interrupted_restore_gap(transaction, journal, {"target": current}):
             raise ValueError("restoration rename evidence is missing or modified")
     else:
-        if current != receipt["original"] or moved.exists():
+        if (current != receipt["original"] or moved.exists()
+                or not matches({"target": path}, {"target": receipt["original"]},
+                               expected_security)):
             raise ValueError("target changed during restoration; recovery stopped")
         if path.exists():
             path.rename(moved)  # Keep the current program until restoration has completed.
@@ -299,15 +359,32 @@ def restore_files(home, paths, transaction, journal):
             if path.exists():
                 path.unlink()
         else:
-            write_atomic(path, (transaction / "before" / key).read_bytes())
-        if current_state({key: path})[key] != before[key]:
+            security = journal_permissions(journal, "before")
+            restore_config(path, (transaction / "before" / key).read_bytes(), security[key] if security else None)
+        if not matches({key: path}, before, journal_permissions(journal, "before")):
             raise ValueError("resource changed during restoration: " + key)
 
 
-def verify_backup(transaction, before):
+def restore_config(path, data, security):
+    # Restore ACL on an empty private temporary before writing any bytes.
+    if security is None:
+        write_atomic(path, data)
+        return
+    fd, temporary = permissions.temporary_file(path.parent)
+    try:
+        os.close(fd)
+        permissions.apply(temporary, security)
+        write_atomic(temporary, data)
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def verify_backup(transaction, before, security=None):
     backup_paths = {key: transaction / "before" / key if value is not None else None
                     for key, value in before.items()}
-    if current_state(backup_paths) != before:
+    if not matches(backup_paths, before, security):
         raise ValueError("transaction backup is missing or modified; rollback stopped")
 
 
@@ -315,28 +392,33 @@ def interrupted_target_gap(transaction, journal, now):
     # A missing directory alone is not evidence of our interrupted rename.
     return (journal["status"] in ("applying", "recovery_conflict")
             and now["target"] is None and journal["before"]["target"] is not None
-            and current_state({"target": transaction / "displaced"})["target"] == journal["before"]["target"]
-            and current_state({"target": transaction / "stage"})["target"] == journal["after"]["target"])
+            and matches({"target": transaction / "displaced"}, journal["before"], journal_permissions(journal, "before"))
+            and matches({"target": transaction / "stage"}, journal["after"], journal_permissions(journal, "after")))
 
 
 def recover_attempt(home, paths, transaction, journal, attempted):
     # Only restore resources this attempt tried to write. Preserve all foreign edits,
     # including edits to resources we wrote that no longer match our planned bytes.
     now = current_state(paths)
+    now_permissions = permission_state(paths)
+    before_permissions = journal_permissions(journal, "before")
+    after_permissions = journal_permissions(journal, "after")
     safe, conflicts = {}, []
     for key in attempted:
-        if now[key] == journal["before"][key]:
+        if matches({key: paths[key]}, journal["before"], before_permissions):
             continue
-        if now[key] == journal["after"][key] or (key == "target" and
+        if matches({key: paths[key]}, journal["after"], after_permissions) or (key == "target" and
                 (interrupted_target_gap(transaction, journal, now) or interrupted_restore_gap(transaction, journal, now))):
             safe[key] = paths[key]
         else:
             conflicts.append(key)
-    verify_backup(transaction, {key: journal["before"][key] for key in safe})
+    backup_permissions = journal_permissions(journal, "backup")
+    verify_backup(transaction, {key: journal["before"][key] for key in safe},
+                  {key: backup_permissions[key] for key in safe} if backup_permissions else None)
     # Recheck each resource immediately before restoration. This is conflict
     # detection, not an OS-wide lock against other plugin managers.
     for key, path in safe.items():
-        if current_state({key: path})[key] != now[key]:
+        if not matches({key: path}, now, now_permissions):
             conflicts.append(key)
             continue
         restore_files(home, {key: path}, transaction, journal)
@@ -378,12 +460,13 @@ def install(mode, home, python_path=None, check_launcher=False):
             if path is not None:
                 within(home, path)
         before = current_state(paths)
+        before_permissions = permission_state(paths)
         version = load_json(ROOT / "plugin.json")["version"]
         old = tree_bytes(paths["target"])
         new = merge_program(old, source_files(mode), mode, version)
         catalog = catalog_update(paths["catalog"], home, paths["target"]) if mode == "plugin" else None
         desired = {"target": new, "catalog": encoded(catalog) if catalog else None, "runtime": runtime_data(python_path or sys.executable)}
-        if current_state(paths) != before:
+        if not matches(paths, before, before_permissions):
             raise ValueError("installation changed during preparation; retry after closing other installers")
         after = {"target": hashes(new), "catalog": digest(desired["catalog"]) if catalog else None, "runtime": digest(desired["runtime"])}
         result = {"mode": mode, "version": version, "path": str(paths["target"]), "changed": before != after, "backup": None, "catalogBackup": None, "transaction": None}
@@ -397,7 +480,7 @@ def install(mode, home, python_path=None, check_launcher=False):
             return result
         transaction = home / ".codex/auto-prompt/transactions" / uuid.uuid4().hex
         within(home, transaction)
-        transaction.mkdir(parents=True)
+        permissions.mkdir_private(transaction)
         (transaction / "before").mkdir()
         for key, path in paths.items():
             if path is not None and before[key] is not None:
@@ -411,10 +494,25 @@ def install(mode, home, python_path=None, check_launcher=False):
             output = stage / name
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_bytes(data)
-        journal = {"schema": 1, "mode": mode, "status": "applying", "before": before, "after": after, "version": version}
+        if before_permissions["target"] is not None:
+            surviving = {name: value for name, value in before_permissions["target"].items()
+                         if name not in old or name in new}
+            apply_tree_permissions(stage, surviving)
+        after_permissions = permission_state({"target": stage})
+        for key in ("catalog", "runtime"):
+            after_permissions[key] = before_permissions[key]
+            if desired[key] is not None and after_permissions[key] is None:
+                probe = transaction / ("permission-probe-" + key)
+                fd = permissions.private_file(probe)
+                os.close(fd)
+                after_permissions[key] = permissions.capture(probe)
+                probe.unlink()
+        backup_paths = {key: transaction / "before" / key if before[key] is not None else None for key in paths}
+        journal = {"schema": 2, "mode": mode, "status": "applying", "before": before, "after": after, "version": version,
+                   "permissions": {"before": before_permissions, "after": after_permissions, "backup": permission_state(backup_paths)}}
         write_atomic(transaction / "transaction.json", encoded(journal))
         # Check before the try: another process's newly edited data must not be restored over.
-        if current_state(paths) != before:
+        if not matches(paths, before, before_permissions):
             raise ValueError("installation changed during preparation; retry after closing other installers")
         attempted = set()
         switch_conflict = False
@@ -425,7 +523,7 @@ def install(mode, home, python_path=None, check_launcher=False):
                 attempted.add("target")
                 # Recheck the actual moved tree, closing the final pre-rename check window.
                 try:
-                    moved_matches = hashes(tree_bytes(transaction / "displaced")) == before["target"]
+                    moved_matches = matches({"target": transaction / "displaced"}, before, before_permissions)
                 except (OSError, ValueError):
                     moved_matches = False
                 if not moved_matches:
@@ -439,15 +537,15 @@ def install(mode, home, python_path=None, check_launcher=False):
             attempted.add("target")
             for key in ("catalog", "runtime"):
                 if desired[key] is not None and before[key] != after[key]:
-                    if current_state({key: paths[key]})[key] != before[key]:
+                    if not matches({key: paths[key]}, before, before_permissions):
                         raise ValueError("installation changed before writing " + key)
                     attempted.add(key)
                     write_atomic(paths[key], desired[key])
-            if current_state(paths) != after:
+            if not matches(paths, after, after_permissions):
                 raise ValueError("post-install verification failed")
             if check_launcher:
                 result["selfTest"] = check_windows_launcher(home, mode)
-            if current_state(paths) != after:
+            if not matches(paths, after, after_permissions):
                 raise ValueError("installation changed during launcher self-check")
             journal["status"] = "committed"
             write_atomic(transaction / "transaction.json", encoded(journal))
@@ -470,7 +568,7 @@ def install(mode, home, python_path=None, check_launcher=False):
 
 def validate_journal(journal):
     message = "unsupported transaction journal; preserve the transaction directory and restore intact evidence before retrying"
-    if (not isinstance(journal, dict) or type(journal.get("schema")) is not int or journal["schema"] != 1
+    if (not isinstance(journal, dict) or type(journal.get("schema")) is not int or journal["schema"] not in (1, 2)
             or journal.get("status") not in ("committed", "applying", "rolled_back", "recovery_conflict")
             or journal.get("mode") not in ("plugin", "skill")):
         raise ValueError(message)
@@ -495,6 +593,32 @@ def validate_journal(journal):
                 raise ValueError(message)
 
 
+    if journal["schema"] == 2:
+        security = journal.get("permissions")
+        if not isinstance(security, dict) or set(security) != {"before", "after", "backup"}:
+            raise ValueError(message)
+        for phase, snapshot in security.items():
+            state = journal["after" if phase == "after" else "before"]
+            if not isinstance(snapshot, dict) or set(snapshot) != set(state):
+                raise ValueError(message)
+            for key, value in snapshot.items():
+                if state[key] is None:
+                    if value is not None:
+                        raise ValueError(message)
+                    continue
+                entries = value if key == "target" else {"config": value}
+                if not isinstance(entries, dict) or not entries or (key == "target" and "." not in entries):
+                    raise ValueError(message)
+                for name, descriptor in entries.items():
+                    if key == "target" and name != ".":
+                        relative_name(name)
+                    if not isinstance(descriptor, dict) or (
+                            os.name == "nt" and (set(descriptor) != {"sddl"} or not isinstance(descriptor["sddl"], str))
+                            or os.name != "nt" and (set(descriptor) != {"mode"} or type(descriptor["mode"]) is not int
+                                                   or not 0 <= descriptor["mode"] <= 0o7777)):
+                        raise ValueError(message)
+
+
 def rollback(home, transaction_id):
     home = Path(home).absolute()
     plain_path(home)
@@ -505,17 +629,20 @@ def rollback(home, transaction_id):
         within(home, transaction)
         journal = load_json(transaction / "transaction.json")
         validate_journal(journal)
+        if os.name == "nt" and journal["schema"] == 1 and any(value is not None for value in journal["before"].values()):
+            raise ValueError("legacy transaction has no original ACL evidence; keep backups and restore permissions manually")
         paths = locations(home, journal["mode"])
         now = current_state(paths)
-        if now == journal["before"]:
+        if matches(paths, journal["before"], journal_permissions(journal, "before")):
             return {"rolledBack": True, "changed": False, "transaction": transaction_id}
-        if any(now[key] not in (journal["before"][key], journal["after"][key])
+        if any(not (matches({key: paths[key]}, journal["before"], journal_permissions(journal, "before"))
+                    or matches({key: paths[key]}, journal["after"], journal_permissions(journal, "after")))
                and not (key == "target" and (interrupted_target_gap(transaction, journal, now)
                                             or interrupted_restore_gap(transaction, journal, now))) for key in paths):
             raise ValueError("files/configuration changed since installation; rollback stopped to preserve later edits")
-        verify_backup(transaction, journal["before"])
+        verify_backup(transaction, journal["before"], journal_permissions(journal, "backup"))
         recover_attempt(home, paths, transaction, journal, set(paths))
-        if current_state(paths) != journal["before"]:
+        if not matches(paths, journal["before"], journal_permissions(journal, "before")):
             raise ValueError("files/configuration changed during rollback; later edits preserved")
         journal["status"] = "rolled_back"
         write_atomic(transaction / "transaction.json", encoded(journal))

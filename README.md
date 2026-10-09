@@ -1,10 +1,10 @@
-# Auto Prompt Skill · v1.1.0
+# Auto Prompt Skill · v1.1.1
 
-> v1.1.0 安全性修复版：加强文件、安装事务、输入和运行时保护。变更与升级限制见[发布说明](docs/release-v1.1.0.md)。
+> v1.1.1 安全性修复版：升级和回滚保留 Windows 访问权限，保护备份与临时文件。变更与升级限制见[发布说明](docs/release-v1.1.1.md)。
 
 在 ChatGPT 中，把“目标 Agent＋口语化需求”整理成可复制的提示词。适合希望把想法说清楚，再交给 Codex、ChatGPT、视频生成模型等工具处理的人；支持开发、学习、研究、写作和视频需求。
 
-[桌面整合包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip) · [网页插件包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip) · [完整安装教程](docs/install.md) · [English](README.en.md)
+[桌面整合包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-bundle.zip) · [网页插件包](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-plugin.zip) · [完整安装教程](docs/install.md) · [English](README.en.md)
 
 ## 能做什么
 
@@ -19,14 +19,14 @@
 
 | 使用环境 | 下载文件 | 安装入口 |
 | --- | --- | --- |
-| Windows 电脑浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.1.0-plugin.zip` | 插件页右上角 `＋` → 上传插件 |
-| Windows x64 的 ChatGPT 桌面客户端，本地 Work | `auto-prompt-skill-1.1.0-bundle.zip` | 解压 → `Install-Windows.cmd` → 客户端启用 |
+| Windows 电脑浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.1.1-plugin.zip` | 插件页右上角 `＋` → 上传插件 |
+| Windows x64 的 ChatGPT 桌面客户端，本地 Work | `auto-prompt-skill-1.1.1-bundle.zip` | 解压 → `Install-Windows.cmd` → 客户端启用 |
 
-下载项与 `SHA256SUMS.txt` 均在 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)的 **Assets** 中。详细步骤见[安装教程](docs/install.md)。
+下载项与 `SHA256SUMS.txt` 均在 [v1.1.1 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.1)的 **Assets** 中。详细步骤见[安装教程](docs/install.md)。
 
 ### 网页版：上传插件
 
-1. 下载 [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip)，按[教程核对校验值](docs/install.md#1-下载网页插件包)，保持 ZIP，不解压。
+1. 下载 [plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-plugin.zip)，按[教程核对校验值](docs/install.md#1-下载网页插件包)，保持 ZIP，不解压。
 2. 在浏览器打开 ChatGPT，点击左侧“插件”，再点击搜索框右侧的 `＋`，选择“上传插件”，选中刚下载的 ZIP。
 3. 看到“导入成功”后点击“查看插件”，在“个人 → 我创建的”找到 **Auto Prompt Skill**；若详情页仍有安装按钮，完成安装。
 4. 新建聊天，输入 `@` 并选择 Auto Prompt 插件或其技能，发送 `请调用 Auto Prompt 技能`，按引导提供目标 Agent 和需求。
@@ -36,7 +36,7 @@
 ### 桌面客户端：本地安装
 
 1. 安装并登录支持本地 Work 和本地插件来源的 ChatGPT **Windows 桌面客户端**。
-2. 下载 [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip)，按[教程核对校验值](docs/install.md#2-下载并核对文件)，解压并双击 `Install-Windows.cmd`。
+2. 下载 [bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-bundle.zip)，按[教程核对校验值](docs/install.md#2-下载并核对文件)，解压并双击 `Install-Windows.cmd`。
 3. 看到“严格脚本自检：通过”后，刷新或重启桌面客户端，在插件页切换到安装器打印的本地来源（新建来源通常为 **Auto Prompt Local**／`auto-prompt-local`），安装或刷新 **Auto Prompt Skill**。
 4. 新建连接本机的 Work 聊天，选择技能并发送 `请调用 Auto Prompt 技能`。详细入口辨认、成功标志和找不到来源的处理见[桌面教程](docs/install.md#二windows-桌面客户端本地安装)。
 
@@ -73,7 +73,7 @@
 
 桌面本地升级使用整合包和同一个安装入口，再刷新客户端插件。这条路径保留独立用户文件；程序文件被修改或与新版路径冲突时，安装器停止并列出问题，不自动覆盖或拼接规则，重复安装不会重复登记。网页个人导入的更新方式和未验证项另见[升级说明](docs/install.md#升级与自定义内容)。
 
-升级到 **v1.1.0** 请重新下载安装包和校验清单；已有解释器不符合补丁策略时，安装器准备项目专属运行时，不升级共享依赖。详见[v1.1.0 发布说明](docs/release-v1.1.0.md)。
+升级到 **v1.1.1** 请重新下载安装包和校验清单；已有解释器不符合补丁策略时，安装器准备项目专属运行时，不升级共享依赖。详见[v1.1.1 发布说明](docs/release-v1.1.1.md)。
 
 历史 **v1.0.2 有同版本修订，版本号不能单独判断是否更新。** 2026-10-05 修订了解释器复用和安装自检；2026-10-07 修订了恢复、并发运行时准备、打包检查和损坏配置错误。详见[发布说明](docs/release-v1.0.2.md)。
 

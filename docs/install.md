@@ -1,6 +1,6 @@
-# 安装与使用 · v1.1.0
+# 安装与使用 · v1.1.1
 
-> v1.1.0 安全性修复版：加强文件、安装事务、输入和运行时保护。变更与升级限制见[发布说明](release-v1.1.0.md)。
+> v1.1.1 安全性修复版：升级和回滚保留 Windows 访问权限，保护备份与临时文件。变更与升级限制见[发布说明](release-v1.1.1.md)。
 
 最新步骤以[GitHub 安装教程](https://github.com/Saki-174/auto-prompt-skill/blob/main/docs/install.md)为准；现有 Release 整合包内的文档可能早于本次更新。
 
@@ -12,12 +12,12 @@
 
 | 你要在哪里使用 | 应下载的文件 | 接下来做什么 |
 | --- | --- | --- |
-| 浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.1.0-plugin.zip` | 保持压缩状态，在网页插件页“上传插件” |
-| ChatGPT Windows x64 桌面客户端的本地 Work | `auto-prompt-skill-1.1.0-bundle.zip` | 解压，运行 Windows 安装器，再在客户端启用 |
+| 浏览器中的 ChatGPT 网页版 | `auto-prompt-skill-1.1.1-plugin.zip` | 保持压缩状态，在网页插件页“上传插件” |
+| ChatGPT Windows x64 桌面客户端的本地 Work | `auto-prompt-skill-1.1.1-bundle.zip` | 解压，运行 Windows 安装器，再在客户端启用 |
 
-另有 `auto-prompt-1.1.0-skill.zip`，用于已有单技能导入／发现方式的宿主；本教程的网页“上传插件”和桌面安装器路径均使用上表文件。GitHub 的 **Source code** 压缩包也不是这两条路径的推荐下载项。
+另有 `auto-prompt-1.1.1-skill.zip`，用于已有单技能导入／发现方式的宿主；本教程的网页“上传插件”和桌面安装器路径均使用上表文件。GitHub 的 **Source code** 压缩包也不是这两条路径的推荐下载项。
 
-所有文件均在 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)的 **Assets** 中，校验清单是 [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/SHA256SUMS.txt)。两条路径都需要可登录的 ChatGPT 账号和相应插件入口，账号或工作区政策可能限制可见功能。
+所有文件均在 [v1.1.1 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.1)的 **Assets** 中，校验清单是 [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/SHA256SUMS.txt)。两条路径都需要可登录的 ChatGPT 账号和相应插件入口，账号或工作区政策可能限制可见功能。
 
 ## 一、Windows 电脑浏览器：网页版安装
 
@@ -25,12 +25,12 @@
 
 ### 1. 下载网页插件包
 
-1. 在 Windows 浏览器打开 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)。
-2. 展开 **Assets**，下载 [auto-prompt-skill-1.1.0-plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-plugin.zip) 和 `SHA256SUMS.txt` 到同一下载文件夹。
+1. 在 Windows 浏览器打开 [v1.1.1 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.1)。
+2. 展开 **Assets**，下载 [auto-prompt-skill-1.1.1-plugin.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-plugin.zip) 和 `SHA256SUMS.txt` 到同一下载文件夹。
 3. 在该文件夹打开 PowerShell，用以下只读命令核对文件：
 
 ~~~powershell
-Get-FileHash -LiteralPath '.\auto-prompt-skill-1.1.0-plugin.zip' -Algorithm SHA256
+Get-FileHash -LiteralPath '.\auto-prompt-skill-1.1.1-plugin.zip' -Algorithm SHA256
 Get-Content -LiteralPath '.\SHA256SUMS.txt'
 ~~~
 
@@ -49,7 +49,7 @@ Get-Content -LiteralPath '.\SHA256SUMS.txt'
 
 ### 3. 选择 ZIP，确认导入结果
 
-1. 在文件选择框中选中刚下载的 `auto-prompt-skill-1.1.0-plugin.zip`。
+1. 在文件选择框中选中刚下载的 `auto-prompt-skill-1.1.1-plugin.zip`。
 2. 等待校验。检查“新插件”窗口是否显示所选文件名，以及绿色 **“导入成功”** 提示；出现错误时先处理错误，不继续安装。
 3. 点击右下角 **“查看插件”**。
 4. 在插件页切换到 **“个人”**，在 **“我创建的”** 中找到 **Auto Prompt Skill**，打开详情。
@@ -134,17 +134,17 @@ Get-Content -LiteralPath '.\SHA256SUMS.txt'
 
 ### 2. 下载并核对文件
 
-打开 [v1.1.0 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.0)，展开 **Assets**，下载这两个文件到同一文件夹：
+打开 [v1.1.1 发布页](https://github.com/Saki-174/auto-prompt-skill/releases/tag/v1.1.1)，展开 **Assets**，下载这两个文件到同一文件夹：
 
-- [auto-prompt-skill-1.1.0-bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/auto-prompt-skill-1.1.0-bundle.zip)：含安装器、技能、脚本及文档。
-- [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.0/SHA256SUMS.txt)：三个 ZIP 的校验清单。
+- [auto-prompt-skill-1.1.1-bundle.zip](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/auto-prompt-skill-1.1.1-bundle.zip)：含安装器、技能、脚本及文档。
+- [SHA256SUMS.txt](https://github.com/Saki-174/auto-prompt-skill/releases/download/v1.1.1/SHA256SUMS.txt)：三个 ZIP 的校验清单。
 
 **桌面本地安装使用整合包。** 上面的网页路径使用 `plugin.zip`；`skill.zip` 用于已有单技能导入方式。它们不含本地安装器；GitHub 的 **Source code** 压缩包也不是推荐下载项。
 
 在下载文件夹打开 PowerShell，运行以下只读命令：
 
 ~~~powershell
-Get-FileHash -LiteralPath '.\auto-prompt-skill-1.1.0-bundle.zip' -Algorithm SHA256
+Get-FileHash -LiteralPath '.\auto-prompt-skill-1.1.1-bundle.zip' -Algorithm SHA256
 Get-Content -LiteralPath '.\SHA256SUMS.txt'
 ~~~
 
@@ -191,7 +191,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 请调用 Auto Prompt 技能。
 ~~~
 
-预期进入简短引导，而不是空模板。需要确认加载情况时，让它报告实际读取的 `SKILL.md` 路径和插件版本，应为 v1.1.0；完整检查见[新对话验收清单](chatgpt-acceptance.md)。
+预期进入简短引导，而不是空模板。需要确认加载情况时，让它报告实际读取的 `SKILL.md` 路径和插件版本，应为 v1.1.1；完整检查见[新对话验收清单](chatgpt-acceptance.md)。
 
 **安装器自检通过不代表客户端已经启用。** 同版本修订还需按[升级步骤](#升级与自定义内容)重新下载、安装和刷新，不能只看版本号或旧聊天的说法。
 
@@ -219,7 +219,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-Windows.ps1 -I
 
 ### 桌面本地更新
 
-**升级到 v1.1.0：** 重新下载上面的整合包及校验清单，校验后运行安装器，再刷新客户端插件。升级前关闭相关编辑器；安装器保留独立自定义文件，已修改的程序文件仍会报告冲突。已登记的旧 Python 不符合[补丁策略](security-maintenance.md#运行时维护)时，安装器自动准备专属 Python 3.13.16；离线升级必须提供新版校验 ZIP 或兼容解释器，不能使用旧运行时 ZIP。详见[v1.1.0 发布说明](release-v1.1.0.md)。
+**升级到 v1.1.1：** 重新下载上面的整合包及校验清单，校验后运行安装器，再刷新客户端插件。升级前关闭相关编辑器；安装器保留独立自定义文件，已修改的程序文件仍会报告冲突。已登记的旧 Python 不符合[补丁策略](security-maintenance.md#运行时维护)时，安装器自动准备专属 Python 3.13.16；离线升级必须提供新版校验 ZIP 或兼容解释器，不能使用旧运行时 ZIP。详见[v1.1.1 发布说明](release-v1.1.1.md)。
 
 **历史 v1.0.2 有同版本修订。** 已安装 1.0.2 的用户也需重新下载整合包和 `SHA256SUMS.txt`，核对校验值，运行 `Install-Windows.cmd` 并刷新客户端；程序文件归属按内容摘要判断，不只比较版本号。
 
@@ -274,6 +274,8 @@ v1.1.0 安全修订在旧目录移入 `displaced` 后再次检查内容；并发
 
 旧 schema 1 事务仍可读取；旧安装器已经留下的无证据缺失或部分复制状态仍需人工对比，不能凭目录缺失强行恢复。
 
+**v1.1.1 ACL 修订：** 新事务采用 schema 2，记录内容与权限快照，备份和原子写入临时文件在写入前就限制访问。升级及回滚保留 Windows 文件、目录和配置的 owner、primary group、DACL；仅权限被后来修改时也停止回滚。Windows 旧 schema 1 事务如需恢复已有文件，会因缺少原 ACL 证据而拒绝自动恢复；不要用旧安装器强行绕过。保留活动文件、事务备份和独立权限备份，人工核对后恢复。新版可以安全升级旧程序，但不能补回此前已经丢失的权限。范围和限制见[安装权限保护](security-maintenance.md#安装权限保护v111)。本修订随 v1.1.1 整合包的安装器提供。
+
 运行时准备由独立的 `runtime.prepare.lock` 文件句柄串行化，获取锁后重新检查可用解释器；最多等候 30 秒，仍忙时明确提示稍后重试。正常结束或进程被终止时由系统释放句柄并删除锁，不需要手工删除正在使用的运行时锁。这与下述 Python 安装事务的 `install.lock` 是两个不同的锁，不修改系统依赖或全局配置。
 
 ### 使用事务 ID 回滚
@@ -307,7 +309,7 @@ v1.1.0 安全修订在旧目录移入 `displaced` 后再次检查内容；并发
 ### 网页路径
 
 - 找不到“上传插件”：入口受账号、工作区和功能权限影响，不能凭公共插件页推断具备导入权限。
-- 选了错误文件：网页入口使用 `auto-prompt-skill-1.1.0-plugin.zip`，保持 ZIP。单技能包缺少插件清单，桌面整合包包含额外安装材料；按推荐文件重新选择。
+- 选了错误文件：网页入口使用 `auto-prompt-skill-1.1.1-plugin.zip`，保持 ZIP。单技能包缺少插件清单，桌面整合包包含额外安装材料；按推荐文件重新选择。
 - 导入后找不到：确认登录同一账号／工作区，切换到“个人 → 我创建的”，打开条目检查安装状态，再新建聊天用 `@` 搜索。
 - 上传出现格式或规则错误：保留错误全文或截图，先核对校验值与文件名；包结构和账号检查通过后再处理具体问题，不凭“上传入口可见”宣称导入一定成功。
 - 能生成提示词但严格模式无法运行：按[严格模式环境检查](#6-严格模式先检查执行环境)区分工具缺失、原文件不可访问和运行时不符合策略。网页 ZIP 不准备解释器，Windows 安装器也不会自动修复云端 Python；受阻时选择灵活模式或已验收的桌面本地路径，不冒称严格成功。
